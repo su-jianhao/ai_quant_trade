@@ -16,14 +16,12 @@
 ## Overall Architecture 交易系統
 
 ### 1. 資料與測試
-- data fetch prompt : prompts/data_generate.md
+- data fetch prompt : [prompts/data_generate.md](prompts/data_generate.md)
 - **Factors（因子分類）**：
   - **Trend（趨勢）**：`Up` / `Down` / `Chop`
   - **Volatility（波動度）**：低 / 中 / 高
-- prompts/data/human_stage_trend_vol.md
-
-
-- DATA is generated in data folder. 
+- [prompts/data/human_stage_trend_vol.md](prompts/data/human_stage_trend_vol.md)
+- DATA is generated in `data/{target}/` folder.
 
 ### 2. 選股池階段
 
@@ -94,3 +92,38 @@
 ---
 
 ## Usage
+
+### 0. Python 環境設定
+- **Prompt**：`follow @prompts/python_venv.md to setup python venv and packages`
+
+### 1. 獲取 / 增量同步股票數據 (Get & Sync Data)
+- **Prompt**：
+  - 全量建庫（股票池）：`use @prompts/data_generate.md to generate data for tw50`（支援 `tw50`、`sox`、`sp500`、`nasdaq100`、`mag7`）
+  - 單一標的：`use @prompts/data_generate.md for 2330.TW`（或 `NVDA`）
+  - 增量同步最新數據：`use @prompts/data_generate.md to sync latest data for tw50`
+- **CLI 指令**：
+  ```bash
+  # 自動模式：若 data/{target}/<target>_<year>.db 已存在則增量同步，否則全量建庫
+  python3 -m modules.data_generator --target tw50 --year 2026 --workers 4
+
+  # 強制全量重抓
+  python3 -m modules.data_generator --target tw50 --year 2026 --workers 4 --mode full
+  ```
+- **產出位置 (`data/{target}/`)**：
+  - `<target>_<year>.db`（多週期 SQLite 數據庫，台股含 `taiwan_chips_daily`）
+  - `<target>_<year>_data.md`（量化總賬 / 橫截面摘要）
+  - `<target>_<year>_GUI.html`（Plotly 交互式可視化工作台）
+  - `universe.json`（股票池成分股元數據）
+
+### 2. 股票趨勢 × 波動率分類 (Separate Stocks into Types)
+- **Prompt**：`follow @prompts/data/human_stage_trend_vol.md to refine data for tw50`
+- **CLI 指令**：
+  ```bash
+  python3 -m modules.stage_trend_vol --target tw50 --year 2026
+  ```
+- **分類結果**：依 15% ZigZag 趨勢（`UP` / `DOWN` / `CHOP`）× 個股歷史中位 `HV20%` 波動率（`LOW_VOL` / `HIGH_VOL`），切分為 6 類市況（`UP_LOW_VOL`、`UP_HIGH_VOL`、`DOWN_LOW_VOL`、`DOWN_HIGH_VOL`、`CHOP_LOW_VOL`、`CHOP_HIGH_VOL`）。
+- **產出位置 (`data/{target}/`)**：
+  - SQLite 資料表：`trend_vol_stages`（寫入 `<target>_<year>.db`）
+  - 回測標準 CSV：`<target>_<year>_trend_vol_stages.csv`
+  - 三聯圖人工標註工作台：`<target>_<year>_trend_vol_viewer.html`
+  - 階段統計報告：`<target>_<year>_trend_vol_report.md`
