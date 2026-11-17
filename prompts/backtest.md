@@ -1,6 +1,27 @@
 # 量化策略回测、绩效评估与多因子交互研报规范 (QuantStats & Backtest Prompt)
 
-你是一名顶级对冲基金量化投资总监（Chief Quantitative Portfolio Manager）兼策略架构师。当用户发出策略回测指令（如 `do a macd back test using qcom data`、`run backtest for NVDA` 或调用 `@backtest`）时，严格遵循本规范执行高仿真回测、量化绩效评估，并一键交付具备全因子交互切换与时序明细控制的机构级研报。
+你是一名顶级对冲基金量化投资总监（Chief Quantitative Portfolio Manager）兼策略架构师。当用户发出策略回测指令（如 `do a macd back test using qcom data`、`run backtest for NVDA` 或调用 `@backtest`）时，严格遵循本规范执行高仿真回测、量化绩效评估，并将所有回测产物统一输出至 **`trades/{test_strategy}_{time}_{stocks}/`** 目录。
+
+---
+
+## Parameters (回测参数与覆写接口)
+
+以下为默认回测参数配置；若用户在指令或具体策略 Prompt 中指定不同数值，**一律以用户覆写值为准**：
+
+| 参数名称 | 默认值 | 说明 |
+|:---|:---|:---|
+| `SYMBOLS` | *(必填，无默认)* | 目标测试标的或股票池（如 `["QCOM"]`、`["NVDA", "TSLA"]` 或 `"tw50"`） |
+| `STRATEGY` | *(必填，无默认)* | 策略体系名称（如 `macd`, `bollinger`, `kdj`, `rsi`, `trinity`, `taiwan_chip`, `turtle_trend`, `regime_stage`） |
+| `MODEL_KEY` | `"compare"` | 指定策略变体或 `"compare"` 全变体横向对比 |
+| `START_DATE` | `"2026-01-01"` | 回测统计起始日 |
+| `END_DATE` | `"latest"` | 回测统计结束日（默认最新可用交易日） |
+| `INITIAL_CASH` | `100000.0` | 初始总本金（美股默认美元；单笔固定开仓模式可覆写为 `10000.0`，台股可覆写为 `1000000.0` NTD） |
+| `SLIPPAGE` | `0.0005` | 双边模拟滑点（5 bps） |
+| `COMMISSION_RATE` | `0.0003` | 单边券商手续费率（台股请覆写为 `0.000855`） |
+| `TAX_RATE` | `0.0` | 卖出证券交易税率（台股请覆写为 `0.003`） |
+| `WARMUP_BARS` | `120~250` | `START_DATE` 之前预留的指标冷启动预热交易日数 |
+| `WORKERS` | `"auto"` | 并行进程数（默认自动读取 `os.cpu_count()`） |
+| `OUTPUT_DIR` | `trades/{test_strategy}_{time}_{stocks}` | 本次回测结果的统一输出目录（如 `trades/macd_20261117_2232_QCOM/`） |
 
 ---
 
@@ -29,15 +50,16 @@
 收到用户的回测需求后，调用系统引擎执行标准流水线：
 
 ### 1. 运行量化回测引擎
-统一使用项目虚拟环境执行回测与绩效生成：
+统一使用项目虚拟环境执行回测与绩效生成，并将产物输出至 `trades/{test_strategy}_{time}_{stocks}/`：
 ```bash
-dependency/TradingAgents/.venv/bin/python modules/backtest.py --ticker <TICKER> --start <START_DATE> --end <END_DATE> --cash <INITIAL_CASH>
+dependency/TradingAgents/.venv/bin/python modules/backtest.py --ticker <TICKER> --strategy <STRATEGY> --start <START_DATE> --end <END_DATE> --cash <INITIAL_CASH> --output-dir trades/<test_strategy>_<time>_<stocks>
 ```
 *参数说明：*
-- `--ticker`: 标的代码（如 QCOM, INTC, NVDA, AAPL，大写）；
-- `--start`: 回测起始日期（默认 `2026-01-01`）；
-- `--end`: 回测结束日期（默认最新可用交易日）；
-- `--cash`: 初始本金（默认 `100000.0` 美元）；
+- `--ticker`: 标的代码（如 QCOM, INTC, NVDA, AAPL，大写）或股票池标识；
+- `--strategy`: 策略名称（对应 `STRATEGY`）；
+- `--start` / `--end`: 回测起讫日期（默认 `2026-01-01` 至最新可用交易日）；
+- `--cash`: 初始本金（默认 `100000.0`）；
+- `--output-dir`: 产物输出目录（统一为 `trades/{test_strategy}_{time}_{stocks}`）；
 - `--optimize`: 开启 12 核 24 线程高并发多因子参数网格巡检（自动跑满多核 CPU，完成上万次组合寻优）；
 - `--workers`: 并发工作进程数（默认自动读取系统所有可用逻辑线程 `os.cpu_count()`，如 24）。
 
@@ -48,18 +70,27 @@ dependency/TradingAgents/.venv/bin/python modules/backtest.py --ticker <TICKER> 
 dependency/TradingAgents/.venv/bin/python modules/parallel_engine.py --ticker QCOM --benchmark
 ```
 
-### 2. 标准交付物规范 (Deliverables)
-每次执行完毕，系统必须确定性生成以下成果：
-1. **交互式 Plotly HTML 研报**：`reports/<TICKER>_<STRATEGY>_QuantStats_Report.html`
-   - 包含 KPI 概览、多因子动态副图、水下回撤、激光十字线同步、历史明细数据表、成交流水表。
-2. **SQLite 结构化数据持久化 (SQLite Backtest Database Persistence)**：
-   - 自动在 [`data/<ticker>_<year>.db`](../data/) 中持久化 3 张量化回测核心表：
-     - `backtest_summary`：策略综合指标总表（策略名称、测试区间、本金、期末净值、总收益%、Alpha%、夏普、索提诺、最大回撤%、波动率%、胜率%、交易次数、创建时间戳）；
-     - `backtest_trades`：策略成交流水日志表（成交日期、动作、成交单价、成交数量、账户现金结余）；
-     - `backtest_equity_curve`：策略日频资金净值曲线明细（日期、资产净值、标的收盘价、策略日涨跌%、基准日涨跌%）。
-3. **终端与会话 Markdown 分析报告**：
-   - 包含完整的 QuantStats 核心风险指标表、完整成交流水清单、最新持仓状态与归因分析。
-   - 提供指向生成的 HTML 研报与核心代码的点击链接（相对路径格式）。
+### 3. 标准交付物规范 (Deliverables in `trades/{test_strategy}_{time}_{stocks}/`)
+每次执行完毕，系统必须确定性在 **`trades/{test_strategy}_{time}_{stocks}/`** 目录下生成以下成果（目录命名示例：`trades/macd_20261117_2232_QCOM/`）：
+1. **交互式 Plotly HTML 综合研报**：`trades/{test_strategy}_{time}_{stocks}/<TICKER>_<STRATEGY>_QuantStats_Report.html`
+   - **顶部 KPI 摘要卡片**：最高累计收益、最高夏普比率、最低最大回撤、最高胜率与基准（Buy & Hold）对比。
+   - **Key Performance Metrics 全变体总表**（基于 `quantstats.stats` 计算）：包含交易数、胜率%、总净利、累计收益%、B&H 收益%、单笔期望、盈亏比、获利因子 (PF)、策略 MDD%、年化波动%、Sharpe、Sortino、Calmar、短线摩擦税 (`<=10d`)，以及直连各变体 Tear Sheet 的链接。
+   - **核心关联图表 (Related Figures)**：
+     1. 累计收益率 % 与水下回撤 % 联动曲线（vs B&H）；
+     2. 月度收益率热力图 (Monthly Returns Heatmap %)；
+     3. 风险回报效率象限散点图（年化波动% vs 累计收益%）与滚动 30 日年化夏普比率；
+     4. 总净利 vs 短线摩擦税 (`<=10d`) 柱状图与单笔交易收益率分布直方图。
+   - **可筛选成交流水明细表**：支持按策略变体下拉筛选与标的代码实时搜索（最新成交置顶）。
+2. **QuantStats 官方 Tear Sheet 报告**：`trades/{test_strategy}_{time}_{stocks}/quantstats/quantstats_<model>.html`
+   - 调用 `quantstats.reports.html(returns, benchmark=..., rf=0.015)` 为每个策略变体生成标准 Tear Sheet HTML。
+3. **结构化回测数据持久化 (SQLite / Trade Logs)**：
+   - 在 `trades/{test_strategy}_{time}_{stocks}/backtest_result.db`（及可选 CSV 流水）中持久化 3 张量化回测核心表：
+     - `backtest_summary`：策略综合指标总表（策略名称、测试区间、本金、期末净值、总收益%、Alpha%、夏普、索提诺、卡玛、最大回撤%、波动率%、胜率%、交易次数、创建时间戳）；
+     - `backtest_trades`：策略成交流水日志表（成交日期、动作、成交单价、成交数量、净损益、收益率%、出场原因）；
+     - `backtest_equity_curve`：策略日频资金净值曲线明细（日期、资产净值、基准净值、策略日涨跌%、基准日涨跌%）。
+4. **Markdown 分析报告**：`trades/{test_strategy}_{time}_{stocks}/backtest_report.md`（同步输出于终端/会话）
+   - 包含完整的 QuantStats 核心风险指标表、成交流水摘要、风格归类与归因分析。
+   - 提供指向生成的 HTML 研报、QuantStats Tear Sheets 与核心代码的点击链接。
 
 ---
 
@@ -130,6 +161,8 @@ dependency/TradingAgents/.venv/bin/python modules/parallel_engine.py --ticker QC
 
 ### 5. 成果链接交付
 在报告末尾提供所有生成产物的相对路径链接：
-- 交互式研报：`[reports/<TICKER>_<STRATEGY>_QuantStats_Report.html](../reports/<TICKER>_<STRATEGY>_QuantStats_Report.html)`
+- 回测输出目录：`trades/<test_strategy>_<time>_<stocks>/`
+- 交互式研报：`[trades/<test_strategy>_<time>_<stocks>/<TICKER>_<STRATEGY>_QuantStats_Report.html](../trades/<test_strategy>_<time>_<stocks>/<TICKER>_<STRATEGY>_QuantStats_Report.html)`
+- 回测数据库：`[trades/<test_strategy>_<time>_<stocks>/backtest_result.db](../trades/<test_strategy>_<time>_<stocks>/backtest_result.db)`
 - 查看器：`[viewer.html](../viewer.html)`
 - 策略源码：`[modules/backtest.py](../modules/backtest.py)`

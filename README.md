@@ -16,11 +16,14 @@
 ## Overall Architecture 交易系統
 
 ### 1. 資料與測試
-- data fetch prompt : [prompts/data_generate.md](prompts/data_generate.md)
+- 資料抓取、防雷（倖存者偏差 / PIT / 雙價格軌道）與多週期生成：[prompts/data_generate.md](prompts/data_generate.md)
 - **Factors（因子分類）**：
   - **Trend（趨勢）**：`Up` / `Down` / `Chop`
   - **Volatility（波動度）**：低 / 中 / 高
-- [prompts/data/human_stage_trend_vol.md](prompts/data/human_stage_trend_vol.md)
+  - 趨勢 × 波動率六階段切分：[prompts/data/human_stage_trend_vol.md](prompts/data/human_stage_trend_vol.md)
+  - 漲跌震盪階段切分：[prompts/data/human_stage_up_down_chop.md](prompts/data/human_stage_up_down_chop.md)
+  - 測試資料類型與台股/事件參考：[prompts/data/test_data_archetypes.md](prompts/data/test_data_archetypes.md)、[prompts/data/taiwan.md](prompts/data/taiwan.md)、[prompts/data/event_dates.md](prompts/data/event_dates.md)
+  - 因子體系總覽：[prompts/factors.md](prompts/factors.md)（細分目錄：[prompts/factors/](prompts/factors/)）
 - DATA is generated in `data/{target}/` folder.
 
 ### 2. 選股池階段
@@ -30,16 +33,18 @@
 - **基本面選股**：依據營收成長、獲利能力、估值與現金流等基本面條件篩選優質標的
 - **策略型選股**：結合技術面、籌碼面或多因子量化條件篩選具備動能或結構優勢的標的
 - **ETF 選股**：篩選具備明確趨勢或產業代表性的 ETF 標的（如 `QQQ`、`SOXX`、`0050.TW`）
-- prompts/stock_selector.md
+- 選股篩選規範：[prompts/stock_selector.md](prompts/stock_selector.md)
+- 個股全維度投研與多情境推演（已整併原 `full_report.md`）：[prompts/stock_analysis.md](prompts/stock_analysis.md)
 ### 3. 策略操作
 
 - **進出場 Signal**：選擇標的的重要性與出場時機的關鍵性
 - **狀態判斷**：標的與市場狀態評估（`Good` / `Bad` / `Status`）
 - **風險控制**：倉位管理與停損風控機制
-- prompts/backtest.md
-- prompts/risk_module.md
-- prompts/general_strategy.md
-- Backtest resut: it should generated in runs/{date}_{strategy}_{stocks} folder
+- 通用策略架構：[prompts/general_strategy.md](prompts/general_strategy.md)
+- 風控模組規範：[prompts/factors/risk_module.md](prompts/factors/risk_module.md)
+- 量化回測與研報規範：[prompts/backtest.md](prompts/backtest.md)
+- 策略庫總目錄（含 MACD / 布林 / KDJ / RSI / 三位一體 / 台股籌碼 / 海龜 / 生命週期 / Qlib）：[prompts/strategy/README.md](prompts/strategy/README.md)（生命週期策略：[prompts/strategy/regime_stage_strategy.md](prompts/strategy/regime_stage_strategy.md)）
+- Backtest result: generated in `trades/{test_strategy}_{time}_{stocks}/` folder
 
 
 ### 4. 改進模組與測試模組關係
@@ -47,8 +52,10 @@
 - **總論**：改進模組與測試模組的定位與回饋閉環
 - **逐筆分析**：交易明細歸因與損益拆解
 - **改進**：依據分析結果進行策略與參數優化
-- prompts/stock_analysis.md
-- prompts/full_report.md
+- 績效覆盤與迭代工作流：[prompts/strategy/quantitative_performance_workflow.md](prompts/strategy/quantitative_performance_workflow.md)
+- 穩健性檢驗六維矩陣：[prompts/analyze/robustness_testing_taxonomy.md](prompts/analyze/robustness_testing_taxonomy.md)
+- 趨勢轉折剖析：[prompts/analyze/trend_change.md](prompts/analyze/trend_change.md)
+- 個股綜合診斷與情境復盤：[prompts/stock_analysis.md](prompts/stock_analysis.md)
 ---
 
 ## 交易 TO BE DONE
@@ -127,3 +134,21 @@
   - 回測標準 CSV：`<target>_<year>_trend_vol_stages.csv`
   - 三聯圖人工標註工作台：`<target>_<year>_trend_vol_viewer.html`
   - 階段統計報告：`<target>_<year>_trend_vol_report.md`
+
+### 3. 策略回測與 QuantStats 績效報告 (Run Backtest & QuantStats Report)
+- **Prompt**：
+  - 全變體對比回測：`do a bollinger strategy test @prompts/strategy/bollinger_strategy.md following @prompts/backtest.md using tw50 data`
+  - 指定單一變體：`run backtest for tw50 using @prompts/strategy/bollinger_strategy.md with MODEL_KEY=regime_adaptive`
+- **CLI 指令**：
+  ```bash
+  # 對 TW50 執行布林通道七大變體對比回測，並生成 QuantStats Tear Sheets 與綜合研報
+  python3 -m modules.backtest --target tw50 --strategy bollinger --model compare
+
+  # 指定輸出目錄與單筆開倉金額
+  python3 -m modules.backtest --target tw50 --strategy bollinger --model regime_adaptive --fixed-cash 100000 --output-dir trades/bollinger_custom_tw50
+  ```
+- **產出位置 (`trades/{test_strategy}_{time}_{stocks}/`)**：
+  - `<target>_<strategy>_QuantStats_Report.html`（綜合暗色互動研報：KPI 卡片、Key Performance Metrics 總表、累計報酬/回撤、月報酬熱力圖、風險報酬散佈/滾動夏普、損益分佈與可篩選成交流水）
+  - `quantstats/quantstats_<model>.html`（各變體官方 QuantStats Tear Sheet HTML 報告）
+  - `backtest_result.db`（持久化 `backtest_summary`、`backtest_trades`、`backtest_equity_curve` 三張表）
+  - `backtest_report.md`（Markdown 績效對照與風格歸類報告）

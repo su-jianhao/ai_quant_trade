@@ -63,6 +63,17 @@
    - 年度行情概況 (交易日數、最高價、最低價、最新價)；
    - **全因子金字塔多空評估總看板 (帶週期屬性與 Tier 1~4 因子優先級)**。
 
+### 🛡️ 回測資料工程防雷守則 (Anti-Bias & Point-in-Time Safeguards)
+除上述「雙價格軌道」與「微觀清洗」外，建構回測數據時必須嚴格遵守以下三項防雷鐵律：
+1. **嚴防倖存者偏差 (Survivorship Bias Prevention)**：
+   - 針對指數成分股池（如 `tw50`, `sox`, `sp500`）進行歷史回測時，必須維持**點時動態成分股 (Point-in-Time Universe)**，並保留歷史已下市 (Delisted) 或遭處置打入全額交割的標的資料，嚴禁僅用當前最新名單回溯歷史。
+2. **點時性與雙時間戳防未來函數 (Dual-Timestamping / No Look-Ahead)**：
+   - 每筆紀錄須區分業務事件日期 (`event_date`) 與公開可用時間戳 (`knowledge_timestamp`)，強制滿足 $T_{\text{exec}} \ge T_{\text{knowledge}}$：
+     - **盤後籌碼**（每日 15:00~17:00 公布）：嚴禁盤中引用，只能於**次日開盤 (`Open`) 或次日收盤 (`Close`)** 撮合成交；
+     - **季度財報**（如 Q1 財報 3/31 截止、5/15 前公布）：嚴禁在法定期限公布前提前引用。
+3. **指標冷啟動前置預熱 (Warm-Up Buffer)**：
+   - 資料庫抓取區間必須比目標回測起始日 $T_{\text{start}}$ 前移 **120 ~ 250 個交易日**（$T_{\text{fetch\_start}} = T_{\text{start}} - 250 \text{ 交易日}$）；先於全量資料計算 SMA、MACD、RSI、ATR、布林帶等衍生因子，再無縫截取 $[T_{\text{start}}, T_{\text{end}}]$ 進入撮合引擎，杜絕初期 `NaN` 與指標失真。
+
 ---
 
 ## 執行工作流 (Execution Workflow)
