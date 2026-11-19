@@ -152,3 +152,38 @@
   - `quantstats/quantstats_<model>.html`（各變體官方 QuantStats Tear Sheet HTML 報告）
   - `backtest_result.db`（持久化 `backtest_summary`、`backtest_trades`、`backtest_equity_curve` 三張表）
   - `backtest_report.md`（Markdown 績效對照與風格歸類報告）
+
+### 4. 個股全維度分析與多情境推演 (Stock Analysis & Scenario Simulation)
+- **Prompt**：
+  - 單一標的：`use @prompts/stock_analysis.md for NVDA`（或 `2330.TW`）
+  - 多標的 / 股票池組合：`do @prompts/stock_analysis.md for nvda/intc/qcom and mag7`
+- **分析維度**：Tier 1~4 因子優先級金字塔（資產/CYQ 籌碼 > 趨勢/FCF/衍生品 > 動能/曲率 > 波動/宏觀）、核心多空矛盾推演，以及機率總和 100% 的三重前瞻情境樹（多頭主升 / 箱體震盪 / 破位下跌）與建倉/停損點位。
+- **產出位置 (`reports/<YYYY-MM-DD>_<ticker>/`)**：
+  - `market_analysis.md`（中文深度投研報告與三情境操作手冊）
+  - `market_analysis.html`（Plotly 深色主題 4 聯動面板互動儀表板：K 線均線、量能與 CYQ 獲利盤、MACD+BIAS50、RSI/AI 評分）
+
+### 5. 通用 SQLite 資料庫檢視器 (General SQLite DB Viewer)
+- **檔案位置**：[modules/viewer.py](modules/viewer.py) / [modules/viewer.html](modules/viewer.html)
+- **使用方式**：
+  - **純瀏覽器模式**：直接開啟 `modules/viewer.html`，拖曳或選取 `data/` 或 `trades/` 下的任意 `.db` 檔案即可檢視。
+  - **本地伺服器模式**（自動列出專案內所有 `.db` 並一鍵切換）：
+    ```bash
+    # 重新產生 viewer.html
+    python3 -m modules.viewer
+
+    # 啟動本地伺服器並開啟瀏覽器
+    python3 -m modules.viewer --serve --db data/tw50/tw50_2026.db
+    ```
+- **核心功能**：
+  - **Price / Volume & 動態指標/指數選項清單**：依 `Date` 軸同步顯示 K 線與成交量，自動列出資料庫內所有可用指標與指數（`ema_*`, `sma_*`, `boll_*`, `macd_*`, `rsi_14`, `kdj_*`, `atr_14`, `cyq_*`, `nq_close`, `es_close`, `vix_close` 及台股籌碼欄位），勾選即即時疊加於主圖或下方副圖；支援切換全部 / 近 90 / 近 30 個交易日。
+  - **回測庫視覺化**：開啟 `backtest_result.db` 時自動繪製各變體與 Benchmark 淨值曲線。
+  - **Table Explorer**：支援切換檢視所有資料表、關鍵字搜尋、自訂 SQL 查詢與 CSV 匯出。
+
+
+## TODO
+- general ui.
+
+
+## reference
+- https://github.com/henrylin99/quantitative_analysis
+- https://github.com/tauricresearch/tradingagents

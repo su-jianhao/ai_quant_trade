@@ -99,8 +99,8 @@
 
 ## 交付规格与检查清单 (Deliverables & Checklist)
 
-- **默认输出**：完整的中文 Markdown 投研报告。
-- **双模态扩展（当通过本地数据库或分析脚本执行时）**：同步产出 `reports/<ticker>_market_analysis.md` 与 Plotly 深色主题交互仪表板 `reports/<ticker>_market_analysis.html`（含 4 联动面板：K 线+5/20/50/200MA+Donchian+止损阶梯、筹码与融资、MACD+BIAS_50、Qlib AI 评分）。
+- **默认输出**：完整的中文 Markdown 投研报告（保存至 `reports/<YYYY-MM-DD>_<ticker>/market_analysis.md`，`<YYYY-MM-DD>` 为分析基准日期）。
+- **双模态扩展（当通过本地数据库或分析脚本执行时）**：在同级子目录 `reports/<YYYY-MM-DD>_<ticker>/` 下同步产出 `market_analysis.md` 与 Plotly 深色主题交互仪表板 `market_analysis.html`（含 4 联动面板：K 线+5/20/50/200MA+Donchian+止损阶梯、筹码与融资、MACD+BIAS_50、Qlib AI 评分）。
 
 交付前核对：
 - [ ] **优先级清晰**：是否严格按 Tier 1 > Tier 2 > Tier 3 > Tier 4 推演矛盾，而非简单数指标？

@@ -1,0 +1,527 @@
+"""
+modules/viewer.py
+通用 SQLite 量化資料庫互動式檢視器 (General SQLite DB Viewer)。
+產出獨立的 modules/viewer.html（支援瀏覽器端 sql.js 直接拖曳/開啟任意 .db 檔），
+亦支援本地輕量 HTTP 伺服器模式直接瀏覽 data/ 與 trades/ 下的所有資料庫。
+"""
+
+from __future__ import annotations
+
+import argparse
+import functools
+import http.server
+import json
+import os
+import socketserver
+import webbrowser
+from pathlib import Path
+
+VIEWER_HTML = r"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Quant Trade — 通用 SQLite 資料庫檢視器</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<style>
+  :root {
+    --bg: #14171F; --panel: #181C25; --border: #262D3D;
+    --text: #E2E8F0; --muted: #94A3B8; --accent: #38BDF8;
+    --green: #00D084; --red: #FF4D4F; --yellow: #FCD34D;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 20px; }
+  .container { max-width: 1520px; margin: 0 auto; }
+  .topbar { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; }
+  .topbar h1 { margin: 0; font-size: 20px; color: #F8FAFC; }
+  .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .dropzone { border: 2px dashed #334155; border-radius: 10px; padding: 16px 20px; text-align: center; background: #11141B; cursor: pointer; transition: 0.2s; margin-bottom: 16px; }
+  .dropzone.drag { border-color: var(--accent); background: #172030; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  select, input, button, textarea { background: #11141B; color: var(--text); border: 1px solid #2E374B; border-radius: 6px; padding: 7px 11px; font-size: 13px; }
+  button { background: #1E293B; cursor: pointer; font-weight: 600; border-color: #38BDF8; color: #38BDF8; }
+  button:hover { background: #26354D; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .panel h2 { margin: 0 0 12px 0; font-size: 15px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .tab { padding: 6px 12px; border-radius: 6px; background: #11141B; border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 13px; }
+  .tab.active { background: #1E3A5F; color: #F8FAFC; border-color: var(--accent); }
+  .index-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; padding: 10px; background: #11141B; border: 1px solid var(--border); border-radius: 8px; max-height: 150px; overflow-y: auto; }
+  .idx-opt { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 5px; background: #181C25; border: 1px solid #2A3244; font-size: 12px; color: var(--text); cursor: pointer; user-select: none; }
+  .idx-opt:hover { border-color: var(--accent); }
+  .idx-opt input { margin: 0; padding: 0; }
+  .stats-bar { display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .stats-bar span strong { color: #F8FAFC; }
+  .table-wrap { max-height: 460px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 7px 10px; border-bottom: 1px solid #212838; text-align: right; white-space: nowrap; }
+  th { background: #11141B; color: var(--muted); position: sticky; top: 0; z-index: 2; }
+  th:first-child, td:first-child { text-align: left; }
+  tr:hover { background: #1E2433; }
+  .sql-box { display: flex; gap: 10px; margin-bottom: 10px; }
+  .sql-box textarea { flex: 1; height: 42px; font-family: monospace; resize: vertical; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <h1>AI Quant Trade — 通用 SQLite 資料庫檢視器</h1>
+      <div class="sub">支援直接開啟 data/*.db（行情/因子/台股籌碼）與 trades/*.db（回測績效與成交流水）</div>
+    </div>
+    <div class="controls">
+      <select id="serverDbSelect" class="hidden" onchange="loadServerDb(this.value)">
+        <option value="">-- 選擇專案資料庫 --</option>
+      </select>
+      <input type="file" id="fileInput" accept=".db,.sqlite,.sqlite3" style="display:none" onchange="handleFile(this.files[0])">
+      <button onclick="document.getElementById('fileInput').click()">📂 開啟本地 .db 檔案</button>
+    </div>
+  </div>
+
+  <div id="dropzone" class="dropzone" onclick="document.getElementById('fileInput').click()">
+    將 <code>.db</code> 檔案拖曳到此處，或點擊右上角按鈕選擇檔案（例如 <code>data/tw50/tw50_2026.db</code>、<code>data/sox/sox_2026.db</code>、<code>trades/.../backtest_result.db</code>）
+  </div>
+
+  <div id="workspace" class="hidden">
+    <div class="panel">
+      <div class="stats-bar" id="dbMeta"></div>
+      <div class="controls" id="chartControls" style="margin-bottom: 10px;"></div>
+      <div id="indexOptionsWrap" class="hidden">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">
+          選擇要顯示的指標 / 指數 (Price-scale 自動疊加於 K 線主圖，其餘顯示於下方指標副圖):
+          <button type="button" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="clearIndexSelections()">清除全部</button>
+        </div>
+        <div class="index-list" id="indexOptionsList"></div>
+      </div>
+      <div id="chartArea"></div>
+    </div>
+
+    <div class="panel">
+      <h2>資料表瀏覽與篩選 (Table Explorer)</h2>
+      <div class="tabs" id="tableTabs"></div>
+      <div class="controls" style="margin-bottom: 10px;">
+        <label>搜尋/過濾: <input type="text" id="rowFilter" placeholder="輸入代碼、日期或關鍵字..." oninput="renderCurrentTable()"></label>
+        <label>顯示筆數:
+          <select id="rowLimit" onchange="renderCurrentTable()">
+            <option value="100">100</option>
+            <option value="300" selected>300</option>
+            <option value="1000">1000</option>
+            <option value="5000">5000</option>
+          </select>
+        </label>
+        <button onclick="exportCsv()">⬇ 匯出目前查詢 CSV</button>
+        <span id="rowCount" style="color: var(--muted); font-size: 13px;"></span>
+      </div>
+      <div class="sql-box">
+        <textarea id="sqlInput" placeholder="SELECT * FROM stock_daily LIMIT 100"></textarea>
+        <button onclick="runCustomSql()">▶ 執行 SQL</button>
+      </div>
+      <div class="table-wrap" id="tableWrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let SQL = null;
+let db = null;
+let currentDbName = "";
+let currentTable = "";
+let currentColumns = [];
+let currentRows = [];
+
+initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` })
+  .then(lib => {
+    SQL = lib;
+    checkServerDbList();
+  });
+
+async function checkServerDbList() {
+  try {
+    const res = await fetch('/api/dbs');
+    if (!res.ok) return;
+    const list = await res.json();
+    if (!Array.isArray(list) || list.length === 0) return;
+    const sel = document.getElementById('serverDbSelect');
+    sel.classList.remove('hidden');
+    list.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p;
+      opt.textContent = p;
+      sel.appendChild(opt);
+    });
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get('db');
+    if (initial && list.includes(initial)) {
+      sel.value = initial;
+      loadServerDb(initial);
+    }
+  } catch (_) {}
+}
+
+async function loadServerDb(relPath) {
+  if (!relPath || !SQL) return;
+  const res = await fetch('/' + relPath);
+  const buf = await res.arrayBuffer();
+  openDatabase(new Uint8Array(buf), relPath);
+}
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  if (!file || !SQL) return;
+  const reader = new FileReader();
+  reader.onload = () => openDatabase(new Uint8Array(reader.result), file.name);
+  reader.readAsArrayBuffer(file);
+}
+
+function queryRows(sql) {
+  const res = db.exec(sql);
+  if (!res.length) return { columns: [], values: [] };
+  return res[0];
+}
+
+function openDatabase(bytes, name) {
+  if (db) db.close();
+  db = new SQL.Database(bytes);
+  currentDbName = name;
+  document.getElementById('workspace').classList.remove('hidden');
+
+  const tablesRes = queryRows("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+  const tables = tablesRes.values.map(r => r[0]);
+  document.getElementById('dbMeta').innerHTML =
+    `<span>資料庫: <strong>${name}</strong></span><span>資料表數量: <strong>${tables.length}</strong></span>`;
+
+  const tabs = document.getElementById('tableTabs');
+  tabs.innerHTML = '';
+  tables.forEach((t, idx) => {
+    const b = document.createElement('div');
+    b.className = 'tab' + (idx === 0 ? ' active' : '');
+    b.textContent = t;
+    b.onclick = () => selectTable(t, b);
+    tabs.appendChild(b);
+  });
+
+  renderAutoChart(tables);
+  if (tables.length) selectTable(tables[0], tabs.children[0]);
+}
+
+function selectTable(name, el) {
+  currentTable = name;
+  document.querySelectorAll('#tableTabs .tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const limit = document.getElementById('rowLimit').value;
+  const orderCol = getOrderColumn(name);
+  const sql = `SELECT * FROM "${name}" ${orderCol ? `ORDER BY "${orderCol}" DESC` : ''} LIMIT ${limit}`;
+  document.getElementById('sqlInput').value = sql;
+  execAndShow(sql);
+}
+
+function getOrderColumn(tableName) {
+  const info = queryRows(`PRAGMA table_info("${tableName}")`);
+  const cols = info.values.map(r => r[1]);
+  if (cols.includes('date')) return 'date';
+  if (cols.includes('exit_date')) return 'exit_date';
+  if (cols.includes('quarter_end')) return 'quarter_end';
+  return null;
+}
+
+function runCustomSql() {
+  const sql = document.getElementById('sqlInput').value.trim();
+  if (sql) execAndShow(sql);
+}
+
+function execAndShow(sql) {
+  try {
+    const res = queryRows(sql);
+    currentColumns = res.columns;
+    currentRows = res.values;
+    renderCurrentTable();
+  } catch (err) {
+    document.getElementById('tableWrap').innerHTML = `<div style="padding:14px;color:var(--red);">SQL 錯誤: ${err.message}</div>`;
+  }
+}
+
+function renderCurrentTable() {
+  const q = document.getElementById('rowFilter').value.trim().toLowerCase();
+  const filtered = q
+    ? currentRows.filter(r => r.some(v => v !== null && String(v).toLowerCase().includes(q)))
+    : currentRows;
+
+  document.getElementById('rowCount').textContent = `顯示 ${filtered.length} / ${currentRows.length} 筆`;
+  if (!currentColumns.length) {
+    document.getElementById('tableWrap').innerHTML = '<div style="padding:14px;color:var(--muted);">無資料</div>';
+    return;
+  }
+  const thead = `<thead><tr>${currentColumns.map(c => `<th>${c}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${filtered.map(r => `<tr>${r.map(v => `<td>${v === null ? '' : v}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  document.getElementById('tableWrap').innerHTML = `<table>${thead}${tbody}</table>`;
+}
+
+function exportCsv() {
+  if (!currentColumns.length) return;
+  const lines = [currentColumns.join(',')];
+  currentRows.forEach(r => lines.push(r.map(v => `"${v === null ? '' : String(v).replace(/"/g, '""')}"`).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${currentTable || 'query'}.csv`;
+  a.click();
+}
+
+const PRICE_OVERLAY_COLS = new Set([
+  'ema_5', 'ema_10', 'ema_20', 'ema_60',
+  'sma_5', 'sma_10', 'sma_20', 'sma_50', 'sma_200',
+  'boll_upper', 'boll_mid', 'boll_lower', 'cyq_avg_cost'
+]);
+const DEFAULT_SELECTED_INDEXES = new Set(['sma_20', 'sma_50', 'rsi_14']);
+let availableIndexCols = [];
+let currentTables = [];
+
+function clearIndexSelections() {
+  document.querySelectorAll('#indexOptionsList input[type="checkbox"]').forEach(chk => { chk.checked = false; });
+  const sel = document.getElementById('tickerSelect');
+  if (sel && sel.value) plotMarketTicker(sel.value, currentTables);
+}
+
+function getAvailableFactorColumns(tables) {
+  const result = [];
+  ['daily_factors', 'taiwan_chips_daily'].forEach(tbl => {
+    if (!tables.includes(tbl)) return;
+    const info = queryRows(`PRAGMA table_info("${tbl}")`);
+    info.values.forEach(r => {
+      const col = r[1];
+      if (!['ticker', 'date'].includes(col) && !result.some(x => x.col === col)) {
+        result.push({ table: tbl, col });
+      }
+    });
+  });
+  return result;
+}
+
+function renderAutoChart(tables) {
+  currentTables = tables;
+  const ctrl = document.getElementById('chartControls');
+  const area = document.getElementById('chartArea');
+  const optWrap = document.getElementById('indexOptionsWrap');
+  const optList = document.getElementById('indexOptionsList');
+  ctrl.innerHTML = '';
+  area.innerHTML = '';
+  optList.innerHTML = '';
+  optWrap.classList.add('hidden');
+
+  if (tables.includes('stock_daily')) {
+    const tickers = queryRows("SELECT DISTINCT ticker FROM stock_daily ORDER BY ticker").values.map(r => r[0]);
+    ctrl.innerHTML = `
+      <label style="font-size:13px;color:var(--muted);">標的:
+        <select id="tickerSelect"></select>
+      </label>
+      <label style="font-size:13px;color:var(--muted);">日期視窗:
+        <select id="dateWindowSelect">
+          <option value="0">全部日期</option>
+          <option value="90">近 90 個交易日</option>
+          <option value="30">近 30 個交易日</option>
+        </select>
+      </label>
+    `;
+    const sel = document.getElementById('tickerSelect');
+    tickers.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t; o.textContent = t;
+      sel.appendChild(o);
+    });
+
+    availableIndexCols = getAvailableFactorColumns(tables);
+    if (availableIndexCols.length) {
+      optWrap.classList.remove('hidden');
+      availableIndexCols.forEach(item => {
+        const lbl = document.createElement('label');
+        lbl.className = 'idx-opt';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.value = item.col;
+        chk.dataset.table = item.table;
+        chk.checked = DEFAULT_SELECTED_INDEXES.has(item.col);
+        chk.onchange = () => plotMarketTicker(sel.value, tables);
+        lbl.appendChild(chk);
+        lbl.appendChild(document.createTextNode(item.col));
+        optList.appendChild(lbl);
+      });
+    }
+
+    const redraw = () => plotMarketTicker(sel.value, tables);
+    sel.onchange = redraw;
+    document.getElementById('dateWindowSelect').onchange = redraw;
+    if (tickers.length) redraw();
+  } else if (tables.includes('backtest_equity_curve')) {
+    plotBacktestDb();
+  } else {
+    area.innerHTML = '<div style="color:var(--muted);font-size:13px;">此資料庫非標準行情或回測結構，請於下方 Table Explorer 瀏覽各資料表。</div>';
+  }
+}
+
+function plotMarketTicker(ticker, tables) {
+  const winDays = parseInt(document.getElementById('dateWindowSelect')?.value || '0', 10);
+  const selected = Array.from(document.querySelectorAll('#indexOptionsList input:checked')).map(c => ({
+    col: c.value, table: c.dataset.table
+  }));
+
+  const selectCols = ['s.date', 's.raw_open', 's.raw_high', 's.raw_low', 's.raw_close', 's.volume'];
+  let joins = '';
+  if (tables.includes('daily_factors')) {
+    joins += ' LEFT JOIN daily_factors f ON s.ticker=f.ticker AND s.date=f.date';
+  }
+  if (tables.includes('taiwan_chips_daily')) {
+    joins += ' LEFT JOIN taiwan_chips_daily c ON s.ticker=c.ticker AND s.date=c.date';
+  }
+  selected.forEach(item => {
+    const alias = item.table === 'daily_factors' ? 'f' : 'c';
+    selectCols.push(`${alias}."${item.col}" AS "${item.col}"`);
+  });
+
+  const sql = `SELECT ${selectCols.join(', ')} FROM stock_daily s${joins} WHERE s.ticker='${ticker}' ORDER BY s.date ASC`;
+  const res = queryRows(sql);
+  const cols = res.columns;
+  const idx = c => cols.indexOf(c);
+  const rows = winDays > 0 ? res.values.slice(-winDays) : res.values;
+  const col = name => {
+    const i = idx(name);
+    return i >= 0 ? rows.map(r => r[i]) : [];
+  };
+
+  const dates = col('date');
+  const opens = col('raw_open');
+  const closes = col('raw_close');
+  const volColors = closes.map((c, i) => (c >= opens[i] ? '#00D084' : '#FF4D4F'));
+
+  const traces = [
+    { type: 'candlestick', x: dates, open: opens, high: col('raw_high'), low: col('raw_low'), close: closes, name: `${ticker} Price`, xaxis: 'x', yaxis: 'y' },
+    { type: 'bar', x: dates, y: col('volume'), name: 'Volume', marker: { color: volColors, opacity: 0.75 }, xaxis: 'x', yaxis: 'y2' },
+  ];
+
+  const palette = ['#38BDF8', '#FCD34D', '#A78BFA', '#FB923C', '#2DD4BF', '#F472B6', '#00D084', '#E879F9', '#60A5FA'];
+  const subCols = [];
+  selected.forEach((item, i) => {
+    const vals = col(item.col);
+    const color = palette[i % palette.length];
+    if (PRICE_OVERLAY_COLS.has(item.col)) {
+      traces.push({ type: 'scatter', x: dates, y: vals, name: item.col, line: { color, width: 1.5 }, xaxis: 'x', yaxis: 'y' });
+    } else {
+      subCols.push(item.col);
+      if (item.col === 'macd_hist') {
+        traces.push({ type: 'bar', x: dates, y: vals, name: item.col, marker: { color: vals.map(v => v >= 0 ? '#00D084' : '#FF4D4F') }, xaxis: 'x', yaxis: 'y3' });
+      } else {
+        traces.push({ type: 'scatter', x: dates, y: vals, name: item.col, line: { color, width: 1.6 }, xaxis: 'x', yaxis: 'y3' });
+      }
+    }
+  });
+
+  const hasSub = subCols.length > 0;
+  const layout = {
+    template: 'plotly_dark', paper_bgcolor: '#181C25', plot_bgcolor: '#14171F',
+    height: hasSub ? 680 : 480, hovermode: 'x unified',
+    margin: { l: 55, r: 30, t: 40, b: 30 },
+    xaxis: { rangeslider: { visible: false }, title: 'Date' },
+    yaxis: { domain: hasSub ? [0.46, 1.0] : [0.28, 1.0], title: 'Price' },
+    yaxis2: { domain: hasSub ? [0.25, 0.42] : [0.0, 0.22], title: 'Volume' },
+    legend: { orientation: 'h', y: 1.04, x: 1, xanchor: 'right' },
+  };
+  if (hasSub) {
+    layout.yaxis3 = { domain: [0.0, 0.21], title: subCols.slice(0, 3).join(' / ') };
+  }
+  Plotly.newPlot('chartArea', traces, layout, { responsive: true });
+}
+
+function plotBacktestDb() {
+  const res = queryRows("SELECT model_key, date, equity, benchmark_nav FROM backtest_equity_curve ORDER BY date ASC");
+  const byModel = {};
+  let benchX = [], benchY = [];
+  res.values.forEach(([mk, dt, eq, bh]) => {
+    if (!byModel[mk]) byModel[mk] = { x: [], y: [] };
+    byModel[mk].x.push(dt);
+    byModel[mk].y.push(eq);
+    if (Object.keys(byModel).length === 1) { benchX.push(dt); benchY.push(bh); }
+  });
+  const traces = Object.entries(byModel).map(([mk, v]) => ({ type: 'scatter', x: v.x, y: v.y, name: mk, mode: 'lines' }));
+  if (benchX.length) traces.push({ type: 'scatter', x: benchX, y: benchY, name: 'Benchmark', line: { dash: 'dash', color: '#94A3B8' } });
+  Plotly.newPlot('chartArea', traces, {
+    template: 'plotly_dark', paper_bgcolor: '#181C25', plot_bgcolor: '#14171F',
+    height: 460, hovermode: 'x unified', title: '回測資金淨值曲線',
+  }, { responsive: true });
+}
+</script>
+</body>
+</html>
+"""
+
+
+def build_viewer_html(out_path: Path | None = None) -> Path:
+    """產出獨立的通用 SQLite 資料庫檢視器 HTML。"""
+    target = out_path or (Path(__file__).resolve().parent / "viewer.html")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(VIEWER_HTML, encoding="utf-8")
+    return target
+
+
+def list_project_dbs(root: Path) -> list[str]:
+    """掃描 data/ 與 trades/ 下的所有 .db 檔案。"""
+    found: list[str] = []
+    for folder in ("data", "trades"):
+        base = root / folder
+        if base.exists():
+            for p in sorted(base.rglob("*.db")):
+                found.append(str(p.relative_to(root)))
+    return found
+
+
+def serve_viewer(root: Path, port: int = 8765, initial_db: str | None = None) -> None:
+    """啟動本地 HTTP 伺服器供瀏覽器直接載入專案 .db 檔案。"""
+    build_viewer_html(root / "modules" / "viewer.html")
+
+    class ViewerHandler(http.server.SimpleHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/api/dbs":
+                payload = json.dumps(list_project_dbs(root)).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+                return
+            super().do_GET()
+
+    handler = functools.partial(ViewerHandler, directory=str(root))
+    socketserver.TCPServer.allow_reuse_address = True
+    with socketserver.TCPServer(("127.0.0.1", port), handler) as httpd:
+        url = f"http://127.0.0.1:{port}/modules/viewer.html"
+        if initial_db:
+            url += f"?db={initial_db}"
+        print(f"Serving DB Viewer at {url}")
+        webbrowser.open(url)
+        httpd.serve_forever()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="通用 SQLite 資料庫檢視器")
+    parser.add_argument("--out", default=None, help="輸出 HTML 路徑 (預設 modules/viewer.html)")
+    parser.add_argument("--serve", action="store_true", help="啟動本地 HTTP 伺服器直接瀏覽 data/ 與 trades/ 資料庫")
+    parser.add_argument("--port", type=int, default=8765, help="伺服器埠號")
+    parser.add_argument("--db", default=None, help="啟動時預先載入的資料庫相對路徑")
+    args = parser.parse_args()
+
+    root = Path(__file__).resolve().parent.parent
+    out = build_viewer_html(Path(args.out) if args.out else None)
+    print(f"Built viewer HTML: {out}")
+    if args.serve:
+        serve_viewer(root, port=args.port, initial_db=args.db)
+
+
+if __name__ == "__main__":
+    main()

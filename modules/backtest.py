@@ -26,13 +26,19 @@ US_FRICTION = {"commission": 0.0003, "tax": 0.0, "slippage": 0.0005}
 def load_universe_data(db_path: str) -> Dict[str, pd.DataFrame]:
     """從 SQLite 資料庫讀取已預熱的日頻行情與衍生因子並依標的整理。"""
     conn = sqlite3.connect(db_path)
-    query = """
+    f_cols = [r[1] for r in conn.execute("PRAGMA table_info(daily_factors)").fetchall()]
+    extra = []
+    for c in ("adx_14", "sma_120"):
+        if c in f_cols:
+            extra.append(f"f.{c}")
+    extra_sql = (", " + ", ".join(extra)) if extra else ""
+    query = f"""
         SELECT
             s.ticker, s.date, s.raw_open, s.raw_high, s.raw_low, s.raw_close,
             s.adj_close, s.volume, s.dividends, s.pct_change, s.is_fillable,
             f.sma_20, f.sma_50, f.sma_200, f.atr_14,
             f.boll_upper, f.boll_mid, f.boll_lower,
-            f.rsi_14, f.macd_dif, f.macd_dea, f.macd_hist
+            f.rsi_14, f.macd_dif, f.macd_dea, f.macd_hist{extra_sql}
         FROM stock_daily s
         JOIN daily_factors f ON s.ticker = f.ticker AND s.date = f.date
         ORDER BY s.ticker ASC, s.date ASC
@@ -48,6 +54,7 @@ def load_universe_data(db_path: str) -> Dict[str, pd.DataFrame]:
         (df["boll_upper"] - df["boll_lower"]) / df["boll_mid"],
         0.0,
     )
+    df["boll_bw_ma20"] = df.groupby("ticker")["boll_bw"].transform(lambda s: s.rolling(20).mean())
 
     return {ticker: g.reset_index(drop=True) for ticker, g in df.groupby("ticker")}
 
@@ -203,6 +210,170 @@ def simulate_bollinger_ticker(
                 should_enter = (closes_adj[i - 1] <= lowers[i - 1]) and (c_adj > l)
 
             if should_enter and i < len(df) - 1:
+                exec_entry = c_raw * (1.0 + slippage)
+                shares = (fixed_cash * (1.0 - commission)) / exec_entry
+                entry_cost_total = fixed_cash
+                entry_raw_price = exec_entry
+                entry_adj_price = c_adj
+                entry_date = str(dates[i])
+                entry_idx = i
+                peak_adj_price = max(c_adj, highs_raw[i] * (c_adj / c_raw))
+                div_received = 0.0
+                in_pos = True
+
+    return trades, pd.Series(daily_pnl, index=df["date"])
+
+
+def simulate_macd_ticker(
+    df: pd.DataFrame,
+    ticker: str,
+    model_key: str,
+    fixed_cash: float,
+    commission: float,
+    tax: float,
+    slippage: float,
+    adx_threshold: float = 20.0,
+    trail_atr_mult: float = 3.0,
+    macro_ok_map: Dict[str, bool] | None = None,
+) -> Tuple[List[dict], pd.Series]:
+    """對單一標的執行 MACD 變體與 Refine 風控版回測。"""
+    regime = classify_regime(df)
+    trades: List[dict] = []
+    daily_pnl = np.zeros(len(df), dtype=float)
+
+    in_pos = False
+    shares = 0.0
+    entry_raw_price = 0.0
+    entry_adj_price = 0.0
+    entry_cost_total = 0.0
+    entry_date = ""
+    entry_idx = -1
+    peak_adj_price = 0.0
+    div_received = 0.0
+    cooldown = 0
+
+    closes_adj = df["adj_close"].to_numpy()
+    highs_raw = df["raw_high"].to_numpy()
+    lows_raw = df["raw_low"].to_numpy()
+    closes_raw = df["raw_close"].to_numpy()
+    difs = df["macd_dif"].to_numpy()
+    deas = df["macd_dea"].to_numpy()
+    adxs = df["adx_14"].to_numpy() if "adx_14" in df.columns else np.full(len(df), 25.0)
+    bws = df["boll_bw"].to_numpy()
+    bw_mas = df["boll_bw_ma20"].to_numpy()
+    atrs = df["atr_14"].to_numpy()
+    sma50s = df["sma_50"].to_numpy()
+    fillables = df["is_fillable"].to_numpy()
+    divs = df["dividends"].fillna(0.0).to_numpy()
+    dates = df["date"].to_numpy()
+
+    for i in range(1, len(df)):
+        c_adj, c_raw = closes_adj[i], closes_raw[i]
+        dif, dea = difs[i], deas[i]
+        dif_p, dea_p = difs[i - 1], deas[i - 1]
+        adx = adxs[i]
+        bw, bw_ma = bws[i], bw_mas[i]
+        atr = atrs[i] if np.isfinite(atrs[i]) and atrs[i] > 0 else c_adj * 0.02
+        fillable = bool(fillables[i])
+
+        if np.isnan(c_adj) or np.isnan(dif) or np.isnan(dea) or c_raw <= 0:
+            continue
+
+        raw_gc = (dif_p <= dea_p) and (dif > dea)
+        raw_dc = (dif_p >= dea_p) and (dif < dea)
+
+        if in_pos:
+            if divs[i] > 0:
+                div_received += shares * divs[i]
+                daily_pnl[i] += shares * divs[i]
+            daily_pnl[i] += shares * (c_raw - closes_raw[i - 1])
+
+            adj_ratio = c_adj / c_raw
+            h_adj = highs_raw[i] * adj_ratio
+            l_adj = lows_raw[i] * adj_ratio
+            if h_adj > peak_adj_price:
+                peak_adj_price = h_adj
+            mfe_pct = (peak_adj_price / entry_adj_price - 1.0) * 100.0
+
+            should_exit = raw_dc
+            exit_reason = "MACD Death Cross"
+
+            if model_key == "bb_trailing":
+                if (peak_adj_price - l_adj) >= trail_atr_mult * atr:
+                    should_exit, exit_reason = True, f"ATR Trail ({trail_atr_mult}x)"
+            elif model_key in ("refined_shield", "refined_macro_shield"):
+                hard_stop = entry_adj_price - 2.0 * atr
+                trail_stop = hard_stop
+                if mfe_pct >= 10.0:
+                    trail_stop = max(trail_stop, entry_adj_price * 1.015)
+                if mfe_pct >= 20.0:
+                    trail_stop = max(trail_stop, peak_adj_price - 2.5 * atr)
+                if c_adj <= trail_stop:
+                    should_exit, exit_reason = True, "Risk Shield Stop"
+                elif raw_dc and mfe_pct < 10.0:
+                    should_exit, exit_reason = True, "MACD Death Cross"
+
+            is_last = i == len(df) - 1
+            if (should_exit and fillable) or is_last:
+                exec_exit = c_raw * (1.0 - slippage)
+                gross_proceeds = shares * exec_exit
+                net_proceeds = gross_proceeds * (1.0 - commission - tax)
+                net_pnl = net_proceeds + div_received - entry_cost_total
+                ret_pct = (net_pnl / entry_cost_total) * 100.0
+                trades.append({
+                    "ticker": ticker,
+                    "regime": regime,
+                    "model_key": model_key,
+                    "effective_engine": model_key,
+                    "entry_date": entry_date,
+                    "exit_date": str(dates[i]),
+                    "entry_price": round(entry_raw_price, 2),
+                    "exit_price": round(exec_exit, 2),
+                    "shares": round(shares, 4),
+                    "hold_days": i - entry_idx,
+                    "net_pnl": round(net_pnl, 2),
+                    "return_pct": round(ret_pct, 2),
+                    "reason": "Mark-to-Market" if is_last and not should_exit else exit_reason,
+                })
+                daily_pnl[i] -= (shares * c_raw - net_proceeds)
+                if model_key in ("refined_shield", "refined_macro_shield") and net_pnl < 0:
+                    cooldown = 3
+                in_pos = False
+                shares = 0.0
+                div_received = 0.0
+        else:
+            if cooldown > 0:
+                cooldown -= 1
+                continue
+            if not fillable or not raw_gc or i >= len(df) - 1:
+                continue
+
+            bb_exp = np.isfinite(bw) and np.isfinite(bw_ma) and (bw >= bw_ma)
+            adx_ok = np.isfinite(adx) and (adx > adx_threshold)
+            water_ok = dif <= 0.0
+
+            enter = False
+            if model_key == "raw":
+                enter = True
+            elif model_key == "adx_20":
+                enter = adx_ok
+            elif model_key == "bb_squeeze":
+                enter = bb_exp
+            elif model_key == "water_reversal":
+                enter = water_ok
+            elif model_key == "adx_water":
+                enter = adx_ok and water_ok
+            elif model_key == "bb_water":
+                enter = bb_exp and water_ok
+            elif model_key == "bb_trailing":
+                enter = bb_exp
+            elif model_key == "refined_shield":
+                enter = adx_ok and (np.isnan(sma50s[i]) or c_adj >= sma50s[i])
+            elif model_key == "refined_macro_shield":
+                m_ok = True if macro_ok_map is None else macro_ok_map.get(str(dates[i]), True)
+                enter = m_ok and adx_ok and (np.isnan(sma50s[i]) or c_adj >= sma50s[i])
+
+            if enter:
                 exec_entry = c_raw * (1.0 + slippage)
                 shares = (fixed_cash * (1.0 - commission)) / exec_entry
                 entry_cost_total = fixed_cash
@@ -677,24 +848,48 @@ def save_outputs(
 def main():
     parser = argparse.ArgumentParser(description="量化策略回測引擎")
     parser.add_argument("--target", default="tw50")
-    parser.add_argument("--strategy", default="bollinger")
+    parser.add_argument("--strategy", default="bollinger", choices=["bollinger", "macd"])
     parser.add_argument("--model", default="compare")
+    parser.add_argument("--db", default=None, help="指定 SQLite 資料庫路徑")
+    parser.add_argument("--start", default=None, help="回測起始日期 YYYY-MM-DD")
+    parser.add_argument("--end", default=None, help="回測結束日期 YYYY-MM-DD")
     parser.add_argument("--fixed-cash", type=float, default=100000.0)
     parser.add_argument("--output-dir", default=None)
     args = parser.parse_args()
 
-    db_path = f"data/{args.target}/{args.target}_2026.db"
-    universe = load_universe_data(db_path)
+    db_path = args.db or f"data/{args.target}/{args.target}_2026.db"
+    universe_all = load_universe_data(db_path)
+
+    # 抽離指數基準 (如 ^TWII) 作為宏觀濾網，不納入選股交易
+    macro_ok_map = None
+    if "^TWII" in universe_all:
+        twii = universe_all["^TWII"]
+        if "sma_120" in twii.columns:
+            macro_ok_map = {
+                str(d): bool(c >= s) if pd.notnull(s) else True
+                for d, c, s in zip(twii["date"], twii["adj_close"], twii["sma_120"])
+            }
+    universe = {k: v for k, v in universe_all.items() if not k.startswith("^")}
+    if args.start or args.end:
+        for k in list(universe.keys()):
+            df_k = universe[k]
+            if args.start:
+                df_k = df_k[df_k["date"] >= args.start]
+            if args.end:
+                df_k = df_k[df_k["date"] <= args.end]
+            universe[k] = df_k.reset_index(drop=True)
+
     tickers = sorted(universe.keys())
 
     ts = datetime.now().strftime("%Y%m%d_%H%M")
     output_dir = args.output_dir or f"trades/{args.strategy}_{ts}_{args.target}"
 
-    variants = (
-        ["baseline", "bw_expand", "profit_lock", "atr_trail", "combo_refined", "reversion", "regime_adaptive"]
-        if args.model == "compare"
-        else [args.model]
-    )
+    if args.strategy == "bollinger":
+        default_variants = ["baseline", "bw_expand", "profit_lock", "atr_trail", "combo_refined", "reversion", "regime_adaptive"]
+    else:
+        default_variants = ["raw", "adx_20", "bb_squeeze", "water_reversal", "adx_water", "bb_water", "bb_trailing", "refined_shield", "refined_macro_shield"]
+
+    variants = default_variants if args.model == "compare" else [args.model]
 
     all_dates = sorted(set().union(*[set(df["date"]) for df in universe.values()]))
     start_date, end_date = all_dates[0], all_dates[-1]
@@ -715,10 +910,17 @@ def main():
         variant_trades = []
         agg_pnl = pd.Series(0.0, index=all_dates)
         for t in tickers:
-            tr, pnl_s = simulate_bollinger_ticker(
-                universe[t], t, mk, args.fixed_cash,
-                TW_FRICTION["commission"], TW_FRICTION["tax"], TW_FRICTION["slippage"],
-            )
+            if args.strategy == "bollinger":
+                tr, pnl_s = simulate_bollinger_ticker(
+                    universe[t], t, mk, args.fixed_cash,
+                    TW_FRICTION["commission"], TW_FRICTION["tax"], TW_FRICTION["slippage"],
+                )
+            else:
+                tr, pnl_s = simulate_macd_ticker(
+                    universe[t], t, mk, args.fixed_cash,
+                    TW_FRICTION["commission"], TW_FRICTION["tax"], TW_FRICTION["slippage"],
+                    macro_ok_map=macro_ok_map,
+                )
             variant_trades.extend(tr)
             agg_pnl = agg_pnl.add(pnl_s.reindex(all_dates).fillna(0.0), fill_value=0.0)
 
