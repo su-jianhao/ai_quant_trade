@@ -99,14 +99,13 @@ flowchart TD
 
 ---
 
-## 階段五：實證檢驗與防過擬合守門 (Empirical Validation & CPCV)
+## 階段五：實證檢驗與穩健性守門 (Empirical Validation & Robustness Gatekeeper)
 
-構思出新策略後，嚴禁直接採納，必須經過嚴格的計量防禦檢驗：
+構思出新策略後，嚴禁直接採納，必須統一調用 **[`@prompts/analyze/robustness_testing_taxonomy.md`](../analyze/robustness_testing_taxonomy.md)** 作為系統級驗收閘門，完成以下三項核心防禦檢驗並產出六維計分卡：
 
-1. **多核心並行網格搜尋 (Multi-Core Parameter Sweep)**：
-   - 善用 CPU 多核心，針對新增參數進行大範圍密集掃描，檢驗參數在目標區間內是否具備「高原特徵 (Parameter Plateau)」，嚴防孤立尖峰（Overfitting Spike）。
-2. **多基準橫向交叉評估 (Multi-Benchmark Scorecard)**：
-   - 策略必須同時與**「個股買入持有基準」**與**「市場總體指數基準」**橫向對比。
-   - 核心標準：**在多頭市場中捕獲至少 85%~90% 以上漲幅，同時在回撤期消滅 30%~50% 以上的最大回撤**。
-3. **事後穩健性檢定**：
-   - 檢定勝率、獲利因子 (Profit Factor)、卡瑪比率與前述 DSR 統計顯著性。
+1. **前進式滾動驗證 (WFO) 與防偽檢定 (CPCV / DSR)**：
+   - 依 `IS/OOS` 滾動盲跑檢驗 `WFE >= 50%` 與 `DSR >= 95%`，確保無樣本外崩壞或多重檢定偏誤。
+2. **參數高原與滑價壓力測試**：
+   - 檢驗核心參數 `±20%` 鄰域高原穩定性與 `0.05% -> 0.5%` 滑價衰減斜率，嚴防孤立尖峰與紙上富貴。
+3. **多基準橫向交叉評估 (Multi-Benchmark Scorecard)**：
+   - 策略必須同時與**「個股買入持有基準」**與**「市場總體指數基準」**橫向對比：在多頭市場捕獲至少 `85%~90%` 以上漲幅，同時在回撤期消滅 `30%~50%` 以上最大回撤。

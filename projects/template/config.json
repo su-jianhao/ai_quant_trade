@@ -1,0 +1,39 @@
+{
+  "project_name": "template",
+  "description": "專案候選股池與券商持倉實盤輔助設定檔",
+  "market": "TW",
+  "benchmark": "0050.TW",
+  "broker": {
+    "name": "Default Broker",
+    "currency": "TWD",
+    "commission_rate": 0.000855,
+    "tax_rate": 0.003,
+    "slippage": 0.0005
+  },
+  "risk": {
+    "risk_budget_pct": 1.5,
+    "max_single_position_pct": 25.0,
+    "hard_stop_pct": 6.0,
+    "breakeven_trigger_pct": 8.0,
+    "chandelier_atr_mult": 2.5
+  },
+  "prompts_mix": {
+    "strategies": [
+      "prompts/strategy/bollinger_strategy.md",
+      "prompts/strategy/macd_strategy.md",
+      "prompts/strategy/taiwan_chip_strategy.md"
+    ],
+    "analysis_prompt": "prompts/stock_analysis.md",
+    "risk_prompt": "prompts/factors/risk_module.md",
+    "robustness_prompt": "prompts/analyze/robustness_testing_taxonomy.md",
+    "robustness_gate": false,
+    "run_backtest": false
+  },
+  "data_sources": {
+    "tw_db": "data/tw50/tw50_2026.db",
+    "us_db": "data/mag7/mag7_2026.db"
+  },
+  "custom": {
+    "trading_rules": "可自由新增任意專案所需欄位（如交易紀律、產業限制、自訂參數等）"
+  }
+}

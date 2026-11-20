@@ -34,7 +34,9 @@
 - **策略型選股**：結合技術面、籌碼面或多因子量化條件篩選具備動能或結構優勢的標的
 - **ETF 選股**：篩選具備明確趨勢或產業代表性的 ETF 標的（如 `QQQ`、`SOXX`、`0050.TW`）
 - 選股篩選規範：[prompts/stock_selector.md](prompts/stock_selector.md)
+- 專案候選股池與券商持倉帳本管理：[prompts/portfolio_manager.md](prompts/portfolio_manager.md)（專案目錄：`projects/<project_name>/`）
 - 個股全維度投研與多情境推演（已整併原 `full_report.md`）：[prompts/stock_analysis.md](prompts/stock_analysis.md)
+- 實盤持倉診斷與加減碼建議：[prompts/trade_advisor.md](prompts/trade_advisor.md)
 ### 3. 策略操作
 
 - **進出場 Signal**：選擇標的的重要性與出場時機的關鍵性
@@ -178,6 +180,20 @@
   - **Price / Volume & 動態指標/指數選項清單**：依 `Date` 軸同步顯示 K 線與成交量，自動列出資料庫內所有可用指標與指數（`ema_*`, `sma_*`, `boll_*`, `macd_*`, `rsi_14`, `kdj_*`, `atr_14`, `cyq_*`, `nq_close`, `es_close`, `vix_close` 及台股籌碼欄位），勾選即即時疊加於主圖或下方副圖；支援切換全部 / 近 90 / 近 30 個交易日。
   - **回測庫視覺化**：開啟 `backtest_result.db` 時自動繪製各變體與 Benchmark 淨值曲線。
   - **Table Explorer**：支援切換檢視所有資料表、關鍵字搜尋、自訂 SQL 查詢與 CSV 匯出。
+
+### 6. 專案制候選股池與券商持倉實盤輔助 (Project Candidate Pool & Broker Trade Assistant)
+- **工作流與分階段 Prompts**：
+  - 端到端聚合工作流：[workflow/project_trade_assistant.md](workflow/project_trade_assistant.md)（目錄：[workflow/README.md](workflow/README.md)）
+  - Stage 1 候選池增刪與券商持股/成本帳本：[prompts/portfolio_manager.md](prompts/portfolio_manager.md)
+  - Stage 4 實盤持倉加減碼與候選建倉建議：[prompts/trade_advisor.md](prompts/trade_advisor.md)
+- **Prompt 使用範例**：
+  - 建立專案並登錄券商持股與候選股：`use @prompts/portfolio_manager.md to create project my_trade, add candidates NVDA, 2330.TW, QCOM, and record holding 2330.TW 1000 shares at cost 1850 with cash 1500000`
+  - 混搭策略執行每日實盤診斷與建議：`run @workflow/project_trade_assistant.md for project my_trade mixing bollinger_strategy.md and taiwan_chip_strategy.md`
+  - 回報採納或調整建議：`use @prompts/portfolio_manager.md for project my_trade: I adapted #S1 and bought 500 shares of 2454.TW at 1380`
+- **產出與狀態位置 (`projects/<project_name>/`)**：
+  - `config.json`（專案開放式設定檔：支援存放基準指數、券商費率、風控上限、混搭策略清單、資料來源與**任意專案自訂資訊**）
+  - `portfolio.db`（SQLite 資料庫：含 `account_summary`、`holdings`、`candidates`、`trade_log`、`adaptation_history` 五張表，可用 `modules/viewer.py` 直接開啟瀏覽）
+  - `reports/<YYYY-MM-DD>_advice/trade_advice.md`（每次實盤診斷與編號化操作建議卡）
 
 
 ## TODO

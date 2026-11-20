@@ -153,11 +153,9 @@ dependency/TradingAgents/.venv/bin/python modules/parallel_engine.py --ticker QC
   - 震荡市中的磨损控制（金叉买入后迅速死叉止损的成本控制）；
   - 当前持仓现状分析（根据最新一日的 MACD/RSI/筹码形态，解释当前处于持仓还是现金状态）。
 
-### 4. 多因子交叉验证与优化建议 (Multi-Factor Optimization)
-- 结合副图因子（RSI / KDJ / CYQ / ATR）提出实盘进阶方案：
-  - **震荡过滤**：是否可引入 RSI 超买（>75）时提前平仓，或低位底背离时提早建仓；
-  - **筹码结构增强**：结合 CYQ 筹码获利盘低于 20% 时的极端恐慌低吸机制；
-  - **动态止损**：基于 ATR 真实波幅设计自适应追踪止损（Trailing Stop）。
+### 4. 多因子交叉验证与稳健性闸门 (Optimization & Robustness Gate)
+- **多因子进阶方案**：结合副图因子（RSI / KDJ / CYQ / ATR）提出震荡过滤、筹码结构增强与动态止损优化建议。
+- **稳健性验收闸门（投产前必检）**：任何拟投入实盘或纳入 `projects/` 候选池的策略，必须调用 [`@prompts/analyze/robustness_testing_taxonomy.md`](analyze/robustness_testing_taxonomy.md) 执行 **Walk-Forward (WFO)、滑价倍数压力测试与 ±20% 参数高原检验**，并附上六维计分卡裁决（`APPROVED_FOR_LIVE` / `WATCH_ONLY` / `REJECTED`）。
 
 ### 5. 成果链接交付
 在报告末尾提供所有生成产物的相对路径链接：

@@ -471,9 +471,9 @@ def build_viewer_html(out_path: Path | None = None) -> Path:
 
 
 def list_project_dbs(root: Path) -> list[str]:
-    """掃描 data/ 與 trades/ 下的所有 .db 檔案。"""
+    """掃描 data/、trades/ 與 projects/ 下的所有 .db 檔案。"""
     found: list[str] = []
-    for folder in ("data", "trades"):
+    for folder in ("data", "trades", "projects"):
         base = root / folder
         if base.exists():
             for p in sorted(base.rglob("*.db")):
