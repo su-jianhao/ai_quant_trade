@@ -79,8 +79,10 @@ projects/<PROJECT_NAME>/
    - 遵循 [`@prompts/stock_analysis.md`](../prompts/stock_analysis.md)，對現有持倉與重點候選股評估 Tier 1~4 因子多空狀態與未來三情境機率。
 2. **策略信號混搭掃描 (`MIX_STRATEGIES`)**：
    - 依用戶指定的 [`@prompts/strategy/*.md`](../prompts/strategy/README.md)（例如混搭 `macd_strategy.md` + `bollinger_strategy.md` + `rsi_strategy.md` + `taiwan_chip_strategy.md`），檢查哪些候選股觸發共振進場信號、哪些持倉股出現出場/減碼信號。
-3. **四層縱深風控檢核**：
-   - 遵循 [`@prompts/factors/risk_module.md`](../prompts/factors/risk_module.md)，根據每檔持倉的**真實買入成本**與波段最高價，計算最新硬停損、保本鎖定線（浮盈 $\ge +8\% \sim 10\%$）與吊燈停利線（浮盈 $\ge +20\%$）。
+3. **四層縱深風控檢核與強制風控覆蓋層（Mandatory Risk Overlay — 不可省略）**：
+   - 遵循 [`@prompts/factors/risk_module.md`](../prompts/factors/risk_module.md)，**風控具備高於一切策略訊號的最高覆蓋權（Risk Overrides Alpha）**：
+     - **回測階段強制內嵌風控**：凡執行策略回測（`RUN_BACKTEST = true`），不可僅跑無停損之純訊號原版；必須將 **初始硬停損（`max(6%, 2.0×ATR)`）**、**浮盈保本鎖定（`+8%` 移至成本 `+0.5%~+1%`）**、**動態 ATR 吊燈停利（`+15%~+20%` 後 `Peak - 2.5×ATR`）** 與 **波動率等風險倉位（單筆風險預算 `1.5%`）＋ 淨值回撤熔斷（`-10%` 減半 / `-15%` 冷卻）** 直接納入回測撮合引擎，並於報告與檢視器中對照「無風控原版 vs 風控強化版（Risk-Managed）」之單筆最大虧損、MDD、盈虧比與 Sharpe 改善幅度；嚴禁無硬停損策略直接進入實盤推薦。
+     - **實盤持倉階段**：根據每檔持倉的**真實買入成本**與波段最高價，即時計算最新硬停損、保本鎖定線與吊燈停利線。
 4. *(可選)* **候選池歷史回測與穩健性閘門 (`RUN_BACKTEST = true` 或 `config.json` 開啟 `robustness_gate`)**：
    - 若 `projects/<PROJECT_NAME>/trades/` 已有相同策略與標的之近期回測資料，預設先引用並檢視既有結果；若資料過期、策略組合變更或用戶要求重跑，則混入 [`@prompts/backtest.md`](../prompts/backtest.md) 執行回測並輸出至 `projects/<PROJECT_NAME>/trades/<YYYYMMDD_HHMM>_<strategy>_<scope>/`（含 HTML 研報、`backtest_result.db`、`backtest_report.md`）。
    - 同步調用 [`@prompts/analyze/robustness_testing_taxonomy.md`](../prompts/analyze/robustness_testing_taxonomy.md) 完成 WFO、滑價壓力與參數高原檢驗，將六維計分卡與 `VERDICT` 存檔為同目錄下的 `robustness_report.md`，並傳遞給 Stage 4。
