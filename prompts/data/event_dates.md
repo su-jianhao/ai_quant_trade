@@ -119,3 +119,25 @@
   * 2026-07-30: EPS 2.02 (預估 1.89, 超預期 +6.74%)
   * 2026-04-30: EPS 2.01 (預估 1.94, 超預期 +3.46%)
 ```
+
+---
+
+## 🗄️ 本地獨立按需事件與新聞資料庫規範 (`events_news.db`)
+
+由於新聞與 SEC 公告文字較長且生命週期獨立於單次策略回測，**重大事件與新聞必須存放於獨立、跨專案共用、可按需增量擴充之 SQLite 資料庫**（例如 `data/sox_mag7_price_vol_types/events_news.db`），嚴禁混入易被重跑覆寫的回測資料庫，且**預設僅針對當前專案所需標的按需拉取（On-Demand），不預設抓取全股票池所有新聞**。
+
+### 1. 標準資料表結構（3 張表）
+- **`events_structured`**：結構化重大事件（`event_id`, `ticker`, `event_date`, `release_timing` (`BMO`/`AMC`/`INTRADAY`/`FILING`), `event_type` (`EARNINGS`/`SEC_8K`/`DIVIDEND`/`ANOMALY_MOVE`), `headline`, `details`, `eps_estimate`, `eps_actual`, `surprise_pct`, `price_move_pct`, `rvol`, `sentiment`, `source`, `url`）。
+- **`news_articles`**：重大市場新聞（`news_id`, `ticker`, `published_date`, `published_ts`, `headline`, `summary`, `publisher`, `sentiment`, `importance`, `url`）。
+- **`fetch_checkpoint`**：各標的最後抓取時間與各類事件筆數（支援按需增量追加新標的，例如 `update_events_news.py --symbols NVDA,AVGO`）。
+
+### 2. 零幻覺資料源與 T / T+1 判讀守則
+1. **免費官方與客觀來源**：
+   - `yfinance`：歷史與預定財報日（含 EPS 預期／實際／驚喜 %）、除息日與近期新聞；
+   - **SEC EDGAR 官方 8-K API**（美股）：完整回溯 2020 至今重大公告（`1.01` 重大合約、`2.02` 財報、`2.05` 重組裁員、`5.02` CEO/CFO 高層異動、`7.01`/`8.01` 重大揭露），附官方原文 URL；
+   - **量價異常偵測 (`ANOMALY_MOVE`)**：自動標記單日 `|ret| >= 7%` 或 `(|ret| >= 5% 且量比 >= 2.0x)` 之特殊日期供覆盤反查。
+2. **盤後公告（AMC）與中性代碼判讀紀律**：
+   - SEC 8-K 項目代碼（如 `[2.02, 5.02]`）本身為**中性法定分類**，不可僅憑代碼臆測利多或利空；必須核對公告內容與**次一交易日（T+1）跳空漲跌幅與成交量**（因美股財報與 8-K 多於盤後發布，真正市場定價常反映於 T+1）。
+3. **檢視器 (`review_viewer.html`) 串接規範**：
+   - 主圖提供可切換開關的事件標記（`💰 財報`、`📢 SEC 8-K`、`⚡ 異常波動`）；
+   - 點擊任一筆交易列縮放檢視時，同步顯示該持倉期間（含前 3 日～後 2 日緩衝）之所有財報／8-K／異常波動／新聞與原文連結。

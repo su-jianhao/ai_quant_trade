@@ -21,6 +21,7 @@
 |:---|:---|:---|
 | [`tw51_macd_from_2015.md`](tw51_macd_from_2015.md) | `data_generate` → `macd_strategy` + `backtest` → `quantitative_performance_workflow` + `robustness_testing_taxonomy` + `risk_module` | 對台灣 50 (`tw50`) 成分股自 `2015-01-01` 至今執行 MACD 七大變體回測、診斷優化並產出綜合研報 |
 | [`project_trade_assistant.md`](project_trade_assistant.md) | `portfolio_manager` → `data_generate` → `stock_analysis` + 自選 `strategy/*.md` + `risk_module` → `trade_advisor` | **實盤輔助與專案候選池管理**：結合 `projects/<name>/` 的券商真實持倉、買入成本與候選股池，混搭多策略產出加減碼與建倉建議並回寫帳本 |
+| [`intc_qcom_multi_strategy_from_2020.md`](intc_qcom_multi_strategy_from_2020.md) | `portfolio_manager` → `data_generate` → `bollinger` / `kdj` / `macd` / `rsi` + `backtest` + `quantitative_performance_workflow` + `robustness_testing_taxonomy` + `risk_module` → `trade_advisor` | **INTC / QCOM 四策略評估與實盤輔助**：自 `2020-01-01` 起橫向回測布林、KDJ、MACD、RSI 全變體，結合本地 SOX/Mag7 量波體制歸因與穩健性閘門產出綜合研報與操作建議 |
 
 ---
 
@@ -30,4 +31,5 @@
 ```text
 run @workflow/tw51_macd_from_2015.md
 run @workflow/project_trade_assistant.md for project my_trade
+run @workflow/intc_qcom_multi_strategy_from_2020.md
 ```

@@ -1,0 +1,34 @@
+{
+  "raw_target": "INTC,QCOM",
+  "slug": "intc_qcom",
+  "target_type": "pool",
+  "market": "US",
+  "benchmark": "SPY",
+  "tickers": [
+    "INTC",
+    "QCOM"
+  ],
+  "output_dir": "data/intc_qcom",
+  "resolved_at": "2026-11-22T20:51:52",
+  "total_constituents": 2,
+  "success_count": 2,
+  "failed_count": 0,
+  "tickers_status": {
+    "INTC": {
+      "ok": true,
+      "name": "INTC",
+      "rows": 224,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-20",
+      "chips_rows": 0
+    },
+    "QCOM": {
+      "ok": true,
+      "name": "QCOM",
+      "rows": 224,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-20",
+      "chips_rows": 0
+    }
+  }
+}

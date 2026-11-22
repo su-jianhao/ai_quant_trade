@@ -1,0 +1,46 @@
+{
+  "project_name": "intc_qcom",
+  "description": "Intel (INTC) & Qualcomm (QCOM) 2020-Present Multi-Strategy (BB/KDJ/MACD/RSI) Evaluation & Trade Assistant",
+  "market": "US",
+  "benchmark": "^SOX",
+  "broker": {
+    "name": "US Equity Broker",
+    "currency": "USD",
+    "commission_rate": 0.0003,
+    "tax_rate": 0.0,
+    "slippage": 0.0005
+  },
+  "risk": {
+    "risk_budget_pct": 1.5,
+    "max_single_position_pct": 25.0,
+    "hard_stop_pct": 6.0,
+    "breakeven_trigger_pct": 8.0,
+    "chandelier_atr_mult": 2.5
+  },
+  "prompts_mix": {
+    "strategies": [
+      "prompts/strategy/bollinger_strategy.md",
+      "prompts/strategy/kdj_strategy.md",
+      "prompts/strategy/macd_strategy.md",
+      "prompts/strategy/rsi_strategy.md"
+    ],
+    "analysis_prompt": "prompts/stock_analysis.md",
+    "risk_prompt": "prompts/factors/risk_module.md",
+    "robustness_prompt": "prompts/analyze/robustness_testing_taxonomy.md",
+    "robustness_gate": true,
+    "run_backtest": true
+  },
+  "data_sources": {
+    "primary_us_db": "data/sox_mag7_price_vol_types/price_vol_analysis.db",
+    "local_cache_db": "data/intc_qcom/intc_qcom_2026.db"
+  },
+  "custom": {
+    "start_date": "2020-01-01",
+    "fixed_cash_per_trade": 10000.0,
+    "model_key": "compare",
+    "symbols": [
+      "INTC",
+      "QCOM"
+    ]
+  }
+}

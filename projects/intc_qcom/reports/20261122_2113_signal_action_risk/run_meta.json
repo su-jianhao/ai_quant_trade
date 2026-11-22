@@ -1,0 +1,16 @@
+{
+  "run_id": "20261122_2113_signal_action_risk",
+  "test_time": "2026-11-22 21:13:00",
+  "project_name": "intc_qcom",
+  "data_end_date": "2026-11-20",
+  "recent_signal_window": "2026-10-01 ~ 2026-11-20",
+  "recent_signals_count": 96,
+  "last10d_signals_count": 32,
+  "open_variants_count": 15,
+  "trades_dir": "projects/intc_qcom/trades/20261122_2040_multi4_intc_qcom",
+  "report_path": "projects/intc_qcom/reports/20261122_2113_signal_action_risk/trade_advice.md",
+  "suggestions": [
+    "#S1",
+    "#S2"
+  ]
+}

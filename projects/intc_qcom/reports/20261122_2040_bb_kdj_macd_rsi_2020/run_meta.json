@@ -1,0 +1,38 @@
+{
+  "run_id": "20261122_2040_bb_kdj_macd_rsi_2020",
+  "timestamp": "20261122_2040",
+  "project_name": "intc_qcom",
+  "data_end_date": "2026-11-20",
+  "symbols": [
+    "INTC",
+    "QCOM"
+  ],
+  "strategies": [
+    "bollinger",
+    "kdj",
+    "macd",
+    "rsi"
+  ],
+  "total_variants_per_symbol": 28,
+  "trades_dir": "projects/intc_qcom/trades/20261122_2040_multi4_intc_qcom",
+  "report_path": "projects/intc_qcom/reports/20261122_2040_bb_kdj_macd_rsi_2020/trade_advice.md",
+  "overall_verdict": "PASS",
+  "best_models": {
+    "INTC": {
+      "strategy": "macd",
+      "model_key": "bb_water",
+      "verdict": "PASS",
+      "sharpe": 0.67
+    },
+    "QCOM": {
+      "strategy": "bollinger",
+      "model_key": "combo_refined",
+      "verdict": "PASS",
+      "sharpe": 0.49
+    }
+  },
+  "suggestions": [
+    "#S1",
+    "#S2"
+  ]
+}

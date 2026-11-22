@@ -80,17 +80,18 @@ dependency/TradingAgents/.venv/bin/python modules/parallel_engine.py --ticker QC
      2. 月度收益率热力图 (Monthly Returns Heatmap %)；
      3. 风险回报效率象限散点图（年化波动% vs 累计收益%）与滚动 30 日年化夏普比率；
      4. 总净利 vs 短线摩擦税 (`<=10d`) 柱状图与单笔交易收益率分布直方图。
-   - **可筛选成交流水明细表**：支持按策略变体下拉筛选与标的代码实时搜索（最新成交置顶）。
+   - **可筛选全部成交流水明细表 (All Trades)**：必须列出全部历史成交记录（不可仅展示近期或截断摘要），支持按标的、策略、变体、盈亏状态（WIN / LOSS / OPEN）与进场体制（Type 1~6）实时筛选与排序，并同步展示筛选后交易笔数、胜率与净损益。
 2. **QuantStats 官方 Tear Sheet 报告**：`trades/{test_strategy}_{time}_{stocks}/quantstats/quantstats_<model>.html`
    - 调用 `quantstats.reports.html(returns, benchmark=..., rf=0.015)` 为每个策略变体生成标准 Tear Sheet HTML。
 3. **结构化回测数据持久化 (SQLite / Trade Logs)**：
-   - 在 `trades/{test_strategy}_{time}_{stocks}/backtest_result.db`（及可选 CSV 流水）中持久化 3 张量化回测核心表：
-     - `backtest_summary`：策略综合指标总表（策略名称、测试区间、本金、期末净值、总收益%、Alpha%、夏普、索提诺、卡玛、最大回撤%、波动率%、胜率%、交易次数、创建时间戳）；
-     - `backtest_trades`：策略成交流水日志表（成交日期、动作、成交单价、成交数量、净损益、收益率%、出场原因）；
+   - 在 `trades/{test_strategy}_{time}_{stocks}/backtest_result.db`（及项目级 `review.db`）中持久化核心表：
+     - `backtest_summary`：策略综合指标总表（策略名称、变体、测试区间、本金、期末净值、总收益%、Alpha%、**盈亏比 (`payoff_ratio`)**、获利因子 (`PF`)、夏普、索提诺、卡玛、最大回撤%、波动率%、胜率%、交易次数、创建时间戳）；
+     - `backtest_trades`：策略全部成交流水日志表（进场日、出场日、动作、成交单价、成交数量、净损益、收益率%、持有天数、出场原因、进场体制）；
+     - `regime_stability`：全变体跨市场体制（`Type 1 ~ Type 6` 及 Bull/Chop/Bear）损益、胜率与稳定性评级表；
      - `backtest_equity_curve`：策略日频资金净值曲线明细（日期、资产净值、基准净值、策略日涨跌%、基准日涨跌%）。
 4. **Markdown 分析报告**：`trades/{test_strategy}_{time}_{stocks}/backtest_report.md`（同步输出于终端/会话）
-   - 包含完整的 QuantStats 核心风险指标表、成交流水摘要、风格归类与归因分析。
-   - 提供指向生成的 HTML 研报、QuantStats Tear Sheets 与核心代码的点击链接。
+   - 必须完整展开**全变体评估矩阵**（含胜率%、**盈亏比**、PF、Sharpe、MDD%、摩擦税）、**跨体制稳定性拆解**、**近期买卖信号与在仓状态**、风格归类与归因分析。
+   - 提供指向生成的 HTML 研报、QuantStats Tear Sheets、项目 `review_viewer.html` 与核心代码的点击链接。
 
 ---
 
