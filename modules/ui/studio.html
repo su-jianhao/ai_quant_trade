@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Quant Trade — 零伺服器互動工作台 (Prompt & Project Studio)</title>
+<style>
+  :root {
+    --bg: #0B1120; --panel: #131C31; --card: #1A2540; --border: #2A3856;
+    --text: #F1F5F9; --muted: #94A3B8; --accent: #38BDF8; --accent2: #818CF8;
+    --green: #10B981; --amber: #F59E0B; --red: #EF4444; --cyan: #00E5FF;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 18px; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Roboto, sans-serif; }
+  .wrap { max-width: 1560px; margin: 0 auto; }
+  .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; background: linear-gradient(135deg, #131C31 0%, #1B2847 100%); border: 1px solid var(--border); border-radius: 14px; padding: 16px 22px; margin-bottom: 16px; }
+  .topbar h1 { margin: 0; font-size: 21px; display: flex; align-items: center; gap: 10px; }
+  .sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .btn { background: #1E293B; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .btn:hover { border-color: var(--accent); background: #243454; }
+  .btn-primary { background: #0284C7; border-color: #38BDF8; color: #FFF; }
+  .btn-primary:hover { background: #0369A1; }
+  .btn-green { background: #059669; border-color: #10B981; color: #FFF; }
+  .btn-green:hover { background: #047857; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .tab { padding: 10px 18px; border-radius: 10px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-weight: 600; font-size: 13.5px; transition: 0.15s; }
+  .tab:hover { color: var(--text); border-color: #475569; }
+  .tab.active { background: #1D4ED8; border-color: var(--accent); color: #FFF; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .panel h2 { margin: 0 0 12px 0; font-size: 15.5px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  .grid-2 { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; }
+  @media (max-width: 1080px) { .grid-2 { grid-template-columns: 1fr; } }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; transition: 0.15s; }
+  .card.clickable { cursor: pointer; }
+  .card.clickable:hover { border-color: var(--accent); transform: translateY(-2px); background: #1F2D4E; }
+  .stage-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  @media (max-width: 900px) { .stage-bar { grid-template-columns: 1fr 1fr; } }
+  .stage { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; position: relative; }
+  .stage .num { font-size: 11px; font-weight: 700; color: var(--cyan); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stage .ttl { font-size: 14px; font-weight: 700; margin: 4px 0; }
+  .stage .dsc { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  label.fld { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    background: #0B1120; color: var(--text); border: 1px solid var(--border); border-radius: 7px; padding: 8px 10px; font-size: 13px; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .chip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .chip { display: flex; align-items: flex-start; gap: 8px; background: #0F172A; border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; cursor: pointer; font-size: 12.5px; user-select: none; }
+  .chip:hover { border-color: var(--accent); }
+  .chip input { margin-top: 2px; }
+  .chip .cdesc { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .code-box { background: #070B14; border: 1px solid #24324E; border-radius: 8px; padding: 12px; font-family: Consolas, "Cascadia Code", monospace; font-size: 12.5px; color: #E2E8F0; white-space: pre-wrap; word-break: break-word; line-height: 1.5; max-height: 260px; overflow: auto; }
+  .code-hdr { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px 0; font-size: 12.5px; font-weight: 700; color: var(--accent); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .b-ok { background: rgba(16,185,129,0.2); color: #34D399; border: 1px solid #10B981; }
+  .b-info { background: rgba(56,189,248,0.18); color: #38BDF8; border: 1px solid #0284C7; }
+  .b-warn { background: rgba(245,158,11,0.2); color: #FBBF24; border: 1px solid #F59E0B; }
+  .editor-layout { display: grid; grid-template-columns: 300px 1fr; gap: 14px; }
+  @media (max-width: 900px) { .editor-layout { grid-template-columns: 1fr; } }
+  .file-list { max-height: 580px; overflow: auto; background: #0B1120; border: 1px solid var(--border); border-radius: 8px; padding: 8px; }
+  .file-item { padding: 7px 10px; border-radius: 6px; font-size: 12.5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .file-item:hover { background: #1E293B; }
+  .file-item.active { background: #1D4ED8; color: #FFF; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { padding: 8px 10px; border-bottom: 1px solid #24324E; text-align: left; }
+  th { background: #0B1120; color: var(--muted); }
+  tr:hover { background: #1E293B; }
+  .hidden { display: none; }
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #059669; color: #FFF; padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: 0.25s; z-index: 99; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>⚡ AI Quant Trade Studio <span class="badge b-info">零伺服器純網頁版</span></h1>
+      <div class="sub">流程導引 × 自由模組混搭 × Antigravity Chat / CLI 指令產生器 × 本機檔案直讀直存（Chrome / Edge）</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <span id="fsStatus" class="badge b-warn">未連結本機資料夾（使用內建目錄）</span>
+      <button class="btn btn-primary" onclick="connectWorkspace()">📂 連結本機工作區 (ai_quant_trade)</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('guide', this)">🧭 1. 流程導引與情境精靈</div>
+    <div class="tab" onclick="showTab('builder', this)">🧩 2. 自由混搭 & 指令工作台</div>
+    <div class="tab" onclick="showTab('editor', this)">📝 3. Prompt / Project 檔案瀏覽與編輯</div>
+    <div class="tab" onclick="showTab('review', this)">📊 4. 報告索引與覆盤檢視器入口</div>
+  </div>
+
+  <!-- TAB 1: GUIDED PLAYBOOKS -->
+  <div id="tab-guide" class="tab-pane">
+    <div class="panel">
+      <h2>全系統四階段量化流程（順著走就知道怎麼用）</h2>
+      <div class="stage-bar">
+        <div class="stage">
+          <div class="num">Stage 1 · Project & Portfolio</div>
+          <div class="ttl">📁 建立專案與持倉同步</div>
+          <div class="dsc">維護 <code>projects/&lt;name&gt;/config.json</code> 與 <code>portfolio.db</code>（候選池、券商成本、現金與歷史覆盤）。</div>
+        </div>
+        <div class="stage">
+          <div class="num">Stage 2 · Data & Events</div>
+          <div class="ttl">📡 行情與重大事件更新</div>
+          <div class="dsc">透過 <code>data_generator</code> 增量更新最新日 K 與技術指標，並按需補充 <code>events_news.db</code>（財報、SEC 8-K）。</div>
+        </div>
+        <div class="stage">
+          <div class="num">Stage 3 · Strategy & Risk</div>
+          <div class="ttl">🧪 策略混搭、風控與盲測</div>
+          <div class="dsc">自由混搭 BB / KDJ / MACD / RSI / Router V2，強制內嵌 <code>risk_module.md</code> 四層風控與 WFO 穩健性驗證。</div>
+        </div>
+        <div class="stage">
+          <div class="num">Stage 4 · Advice & Review</div>
+          <div class="ttl">📊 時間戳報告與互動覆盤</div>
+          <div class="dsc">追加新時間戳報告至 <code>INDEX.md</code>（不覆寫），輸出中文行動建議卡與 <code>review_viewer.html</code>。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>一鍵套用常見任務情境（點擊卡片 → 自動帶入工作台並生成指令）</h2>
+      <div class="cards" id="playbookCards"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: MIX & MATCH BUILDER -->
+  <div id="tab-builder" class="tab-pane hidden">
+    <div class="grid-2">
+      <!-- Left Controls -->
+      <div>
+        <div class="panel">
+          <h2>A. 專案與測試範圍設定</h2>
+          <div class="form-grid">
+            <label class="fld">專案名稱 (PROJECT_NAME)
+              <input type="text" id="inProject" value="intc_qcom" oninput="rebuildCommands()">
+            </label>
+            <label class="fld">市場 / 基準 (MARKET)
+              <select id="inMarket" onchange="onMarketChange(); rebuildCommands()">
+                <option value="US">US 美股 (USD / ^SOX)</option>
+                <option value="TW">TW 台股 (TWD / 0050.TW)</option>
+              </select>
+            </label>
+            <label class="fld">目標標的 (SYMBOLS)
+              <input type="text" id="inSymbols" value="INTC, QCOM" oninput="rebuildCommands()">
+            </label>
+            <label class="fld">回測起點 (START_DATE)
+              <input type="date" id="inStart" value="2020-01-01" onchange="rebuildCommands()">
+            </label>
+            <label class="fld">執行標籤 (RUN_TAG)
+              <input type="text" id="inTag" value="multi_strategy_check" oninput="rebuildCommands()">
+            </label>
+            <label class="fld">任務模式 (WORKFLOW)
+              <select id="inWorkflow" onchange="rebuildCommands()">
+                <option value="workflow/project_trade_assistant.md">實盤輔助與多策略診斷 (project_trade_assistant)</option>
+                <option value="workflow/intc_qcom_multi_strategy_from_2020.md">INTC/QCOM 四策略全週期回測</option>
+                <option value="workflow/tw51_macd_from_2015.md">TW50 自 2015 MACD 優化</option>
+                <option value="CUSTOM">自由呼叫單一／多個 Prompt 模組</option>
+              </select>
+            </label>
+          </div>
+          <label class="fld">選填：券商持倉回報 / 候選股增刪 / 補充指令 (POOL_ACTIONS / BROKER_UPDATES)
+            <input type="text" id="inExtra" placeholder="例如：add NVDA, AVGO；或「我在券商買進 QCOM 80 股成交 149.94」" oninput="rebuildCommands()">
+          </label>
+        </div>
+
+        <div class="panel">
+          <h2>B. 自由勾選策略模組 (MIX_STRATEGIES)</h2>
+          <div class="chip-grid" id="strategyChips"></div>
+        </div>
+
+        <div class="panel">
+          <h2>C. 四層風控、倉位與附加模組（對應 risk_module.md）</h2>
+          <div class="form-grid">
+            <label class="fld">倉位模式 (sizing_mode)
+              <select id="inSizing" onchange="rebuildCommands()">
+                <option value="single_shot">single_shot（依波動一次到位 · 推薦）</option>
+                <option value="tiered_pyramid">tiered_pyramid（信心度階梯加減倉 · 低回撤）</option>
+              </select>
+            </label>
+            <label class="fld">硬停損 ATR 倍數
+              <input type="number" id="inStopAtr" value="2.5" step="0.5" min="1.5" max="4.0" oninput="rebuildCommands()">
+            </label>
+            <label class="fld">保本觸發浮盈 (%)
+              <input type="number" id="inBePct" value="15" step="1" min="5" max="25" oninput="rebuildCommands()">
+            </label>
+            <label class="fld">吊燈停利 ATR 倍數
+              <input type="number" id="inTrailAtr" value="3.0" step="0.5" min="1.5" max="4.0" oninput="rebuildCommands()">
+            </label>
+          </div>
+          <div class="chip-grid">
+            <label class="chip"><input type="checkbox" id="optBacktest" checked onchange="rebuildCommands()"><div><b>執行歷史回測</b><span class="cdesc">展開全變體含盈虧比 & 6體制穩定度</span></div></label>
+            <label class="chip"><input type="checkbox" id="optRisk" checked onchange="rebuildCommands()"><div><b>強制四層風控覆蓋</b><span class="cdesc">對比無風控 Raw vs Risk-Managed</span></div></label>
+            <label class="chip"><input type="checkbox" id="optRob" checked onchange="rebuildCommands()"><div><b>WFO 穩健性閘門</b><span class="cdesc">前進式盲測＋50bps 滑價＋參數高原</span></div></label>
+            <label class="chip"><input type="checkbox" id="optEvents" checked onchange="rebuildCommands()"><div><b>串接事件與新聞庫</b><span class="cdesc">財報 / SEC 8-K / 異常波動聯動</span></div></label>
+            <label class="chip"><input type="checkbox" id="optOverheat" checked onchange="rebuildCommands()"><div><b>高檔過熱減碼</b><span class="cdesc">RSI &gt; 78 或乖離過大主動減 30%</span></div></label>
+            <label class="chip"><input type="checkbox" id="optPreEarn" onchange="rebuildCommands()"><div><b>財報前 3 天降倉</b><span class="cdesc">選配：財報前無緩衝自動減半</span></div></label>
+            <label class="chip"><input type="checkbox" id="optViewer" checked onchange="rebuildCommands()"><div><b>更新 review_viewer.html</b><span class="cdesc">同步時間軸、事件標記、全部交易排序</span></div></label>
+            <label class="chip"><input type="checkbox" id="optNewTs" checked onchange="rebuildCommands()"><div><b>新建時間戳報告</b><span class="cdesc">嚴禁覆寫舊報告，追加至 INDEX.md</span></div></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Live Command Output -->
+      <div>
+        <div class="panel" style="position:sticky;top:16px;">
+          <h2>即時指令輸出（一鍵複製即可用）</h2>
+
+          <div class="code-hdr">
+            <span>💬 1. Antigravity 對話框指令（直接貼到聊天室執行）</span>
+            <button class="btn btn-primary" onclick="copyText('outChat')">📋 複製 Chat 指令</button>
+          </div>
+          <div id="outChat" class="code-box"></div>
+
+          <div class="code-hdr" style="margin-top:14px;">
+            <span>⌨️ 2. Antigravity CLI (`agy`) 指令（貼到終端機執行）</span>
+            <button class="btn" onclick="copyText('outAgy')">📋 複製 CLI 指令</button>
+          </div>
+          <div id="outAgy" class="code-box"></div>
+
+          <div class="code-hdr" style="margin-top:14px;">
+            <span>🐍 3. 本機確定性模組指令（免 Token 更新行情／事件／開 DB 檢視器）</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn" onclick="copyText('outPy')">📋 複製</button>
+              <button class="btn btn-green" onclick="downloadPs1()">⬇️ 下載 .ps1 腳本</button>
+            </div>
+          </div>
+          <div id="outPy" class="code-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: PROMPT & PROJECT EDITOR -->
+  <div id="tab-editor" class="tab-pane hidden">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <h2 style="margin:0;">Prompt / Workflow / Project Config 瀏覽與線上編輯</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="fileFilter" placeholder="搜尋檔名（如 risk, macd, config）..." style="width:240px;" oninput="renderFileList()">
+          <button class="btn btn-green" id="btnSaveFile" onclick="saveActiveFile()" disabled>💾 儲存修改回硬碟</button>
+        </div>
+      </div>
+      <div class="editor-layout">
+        <div class="file-list" id="fileList"></div>
+        <div>
+          <div id="activeFilePath" style="font-size:12.5px;color:var(--accent);margin-bottom:6px;font-family:monospace;">請先點右上角「📂 連結本機工作區」即可直接讀寫所有 .md 與 config.json（目前顯示內建索引）</div>
+          <textarea id="fileEditor" style="height:545px;font-family:Consolas,monospace;font-size:12.5px;line-height:1.55;" placeholder="點擊左側檔案即可檢視或編輯..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: REVIEW & REPORTS HUB -->
+  <div id="tab-review" class="tab-pane hidden">
+    <div class="panel">
+      <h2>一鍵開啟互動式覆盤檢視器（全部免 Server、雙擊即用）</h2>
+      <div class="cards">
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;">📈 INTC & QCOM 整合覆盤檢視器</div>
+          <div class="sub" style="margin:6px 0 12px 0;">K線＋6體制色帶＋財報/8-K 事件＋全 28 變體 & Router V2 買賣點＋全部交易排序與點擊縮放</div>
+          <a class="btn btn-primary" href="../../projects/intc_qcom/review_viewer.html" target="_blank">🚀 開啟 review_viewer.html ↗</a>
+        </div>
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;">🗄️ 通用 SQLite 資料庫檢視器 (sql.js)</div>
+          <div class="sub" style="margin:6px 0 12px 0;">免 Server 直接拖曳開啟 <code>review.db</code>、<code>portfolio.db</code>、<code>events_news.db</code> 或任意回測 DB</div>
+          <a class="btn" href="../viewer.html" target="_blank">📂 開啟 modules/viewer.html ↗</a>
+        </div>
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;">🌐 SOX 30 & Mag 7 量波體制全景</div>
+          <div class="sub" style="margin:6px 0 12px 0;">全市場 39 檔標的 2020–2026 六大宏觀體制對比檢視器</div>
+          <a class="btn" href="../../data/sox_mag7_price_vol_types/price_vol_viewer.html" target="_blank">🌐 開啟 price_vol_viewer.html ↗</a>
+        </div>
+        <div class="card">
+          <div style="font-size:15px;font-weight:700;">⚖️ Raw vs 四層風控互動對照圖</div>
+          <div class="sub" style="margin:6px 0 12px 0;">無風控原版 vs 四層風控強化版 MDD 與淨值曲線直接對比</div>
+          <a class="btn" href="../../projects/intc_qcom/trades/20261123_0125_multi4_risk_managed_intc_qcom/raw_vs_risk_managed_comparison.html" target="_blank">⚖️ 開啟對照圖 ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>專案歷史報告索引（<code>projects/intc_qcom/reports/INDEX.md</code> — 多時間戳累積）</h2>
+      <div style="overflow:auto;">
+        <table id="tblReports">
+          <thead><tr><th>Run ID</th><th>資料截止日</th><th>測試內容</th><th>裁決</th><th>開啟報告</th></tr></thead>
+          <tbody>
+            <tr><td><code>20261123_1100_position_managed_comparison</code></td><td>2026-11-20</td><td>信心度動態加減倉（金字塔/減碼/財報前降倉）vs 單次進出</td><td><span class="badge b-info">POS-MGMT</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261123_1100_position_managed_comparison/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+            <tr><td><code>20261123_0202_router_v2_universal</code></td><td>2026-11-20</td><td>修正版多策略型態路由 V2 + 38 檔零調參盲測 (89.5% 獲利)</td><td><span class="badge b-ok">ROUTER-V2</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261123_0202_router_v2_universal/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+            <tr><td><code>20261123_0152_state_score_delay_universal</code></td><td>2026-11-20</td><td>通用三層 State-Score-Delay + 參數高原 + 38 檔盲測</td><td><span class="badge b-ok">UNIVERSAL</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261123_0152_state_score_delay_universal/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+            <tr><td><code>20261123_0135_hybrid_strategy_vs_bh</code></td><td>2026-11-20</td><td>非金叉混合策略 (H1~H4) vs Buy & Hold</td><td><span class="badge b-info">HYBRID</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261123_0135_hybrid_strategy_vs_bh/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+            <tr><td><code>20261123_0125_risk_managed_comparison</code></td><td>2026-11-20</td><td>四層風控強化版 vs 無風控原版全 28 變體對照</td><td><span class="badge b-ok">RISK-MANAGED</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261123_0125_risk_managed_comparison/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+            <tr><td><code>20261122_2113_signal_action_risk</code></td><td>2026-11-20</td><td>近期買賣訊號掃描 + 中文行動與四層風控報告</td><td><span class="badge b-ok">PASS</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261122_2113_signal_action_risk/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+            <tr><td><code>20261122_2040_bb_kdj_macd_rsi_2020</code></td><td>2026-11-20</td><td>BB / KDJ / MACD / RSI 全 28 變體 + 6 體制穩定性</td><td><span class="badge b-ok">PASS</span></td><td><a class="btn" href="../../projects/intc_qcom/reports/20261122_2040_bb_kdj_macd_rsi_2020/trade_advice.md" target="_blank">檢視 ↗</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">已複製到剪貼簿！</div>
+
+<script>
+const STRATEGIES = [
+  { id: "bollinger_strategy.md", name: "Bollinger 布林通道", desc: "波動擴張突破 / 下軌均值回歸", checked: true },
+  { id: "kdj_strategy.md", name: "KDJ (9,3,3) 隨機指標", desc: "極端超跌低吸反轉（高勝率伏擊）", checked: true },
+  { id: "macd_strategy.md", name: "MACD (12,26,9)", desc: "單邊主升動能 / 水下金叉反轉", checked: true },
+  { id: "rsi_strategy.md", name: "RSI (14) 強弱指標", desc: "極限超跌狙擊 / 放量動能突破", checked: true },
+  { id: "router_v2", name: "Router V2 多策略路由", desc: "強→評分、低波平→RSI、弱→背離（38檔 89.5% 賺）", checked: false },
+  { id: "state_score_delay", name: "State-Score-Delay", desc: "三層選型＋健康評分＋延遲防洗盤", checked: false },
+  { id: "taiwan_chip_strategy.md", name: "台股籌碼策略", desc: "三大法人 / 投信認養（台股專用）", checked: false },
+  { id: "trinity_strategy.md", name: "Trinity 三位一體", desc: "多因子共振進場引擎", checked: false }
+];
+
+const PLAYBOOKS = [
+  {
+    icon: "🆕", title: "建立新交易專案 (Create Project)",
+    desc: "從 template 初始化新專案、設定美股或台股券商費率、建立初始候選股池與 portfolio.db。",
+    preset: { project: "my_us_semi", market: "US", symbols: "NVDA, AVGO, TSM", start: "2020-01-01", tag: "init_project", wf: "workflow/project_trade_assistant.md", strats: ["bollinger_strategy.md","macd_strategy.md","rsi_strategy.md"], extra: "建立新專案並初始化 $100,000 USD 現金與候選股池" }
+  },
+  {
+    icon: "📡", title: "更新最新行情 & 掃描今日買賣訊號",
+    desc: "增量同步最新收盤日行情、掃描近 10~30 日 BUY/SELL 訊號與在倉狀態，產出中文行動與四層風控報告。",
+    preset: { project: "intc_qcom", market: "US", symbols: "INTC, QCOM", start: "2020-01-01", tag: "daily_signal_scan", wf: "workflow/project_trade_assistant.md", strats: ["bollinger_strategy.md","kdj_strategy.md","macd_strategy.md","rsi_strategy.md","router_v2"], extra: "先更新至最新收盤日，檢查近期買賣訊號、在倉部位、中文行動與四層風控" }
+  },
+  {
+    icon: "🧪", title: "全變體回測 + 四層風控前後對照",
+    desc: "同步測試多策略全變體，比較無風控 vs 四層風控（MDD、盈虧比、PF、6體制穩定度與 WFO）。",
+    preset: { project: "intc_qcom", market: "US", symbols: "INTC, QCOM", start: "2020-01-01", tag: "risk_managed_test", wf: "workflow/intc_qcom_multi_strategy_from_2020.md", strats: ["bollinger_strategy.md","kdj_strategy.md","macd_strategy.md","rsi_strategy.md"], extra: "執行無風控 vs 四層風控強化版對照，並展開全變體含盈虧比與 6 體制穩定度" }
+  },
+  {
+    icon: "🚀", title: "通用多策略路由 (Router V2) 跨市場盲測",
+    desc: "不靠金叉死叉，依強/平/弱與波動率路由最合適策略，並用多檔標的驗證防過擬合。",
+    preset: { project: "intc_qcom", market: "US", symbols: "INTC, QCOM", start: "2020-01-01", tag: "router_v2_check", wf: "CUSTOM", strats: ["router_v2","state_score_delay"], extra: "用同一組通用參數回測並與 Buy & Hold 對照，整合進 review_viewer.html" }
+  },
+  {
+    icon: "📰", title: "補充財報 / SEC 8-K 重大事件庫",
+    desc: "按需將指定美股加入 data/sox_mag7_price_vol_types/events_news.db 並串進覆盤檢視器。",
+    preset: { project: "intc_qcom", market: "US", symbols: "INTC, QCOM, NVDA", start: "2020-01-01", tag: "events_sync", wf: "CUSTOM", strats: [], extra: "依 @prompts/data/event_dates.md 更新指定標的之財報、SEC 8-K 與異常波動事件並串接 review_viewer.html" }
+  },
+  {
+    icon: "📝", title: "登錄券商真實成交 & 自動覆盤",
+    desc: "回報你在券商實際買賣的股數與成交價，寫入 portfolio.db 並計算最新保本／吊燈停損線。",
+    preset: { project: "intc_qcom", market: "US", symbols: "INTC, QCOM", start: "2020-01-01", tag: "broker_sync", wf: "workflow/project_trade_assistant.md", strats: ["macd_strategy.md","bollinger_strategy.md"], extra: "我在券商買進 QCOM 80 股均價 150.0，請依 @prompts/portfolio_manager.md 更新 portfolio.db 並計算最新四層風控線" }
+  }
+];
+
+const BUILTIN_FILES = [
+  "workflow/project_trade_assistant.md",
+  "workflow/intc_qcom_multi_strategy_from_2020.md",
+  "workflow/tw51_macd_from_2015.md",
+  "workflow/README.md",
+  "prompts/factors/risk_module.md",
+  "prompts/trade_advisor.md",
+  "prompts/backtest.md",
+  "prompts/data_generate.md",
+  "prompts/portfolio_manager.md",
+  "prompts/data/event_dates.md",
+  "prompts/strategy/bollinger_strategy.md",
+  "prompts/strategy/kdj_strategy.md",
+  "prompts/strategy/macd_strategy.md",
+  "prompts/strategy/rsi_strategy.md",
+  "prompts/analyze/robustness_testing_taxonomy.md",
+  "projects/intc_qcom/config.json",
+  "projects/intc_qcom/reports/INDEX.md"
+];
+
+let dirHandle = null;
+let workspaceFiles = []; // { path, handle }
+let activeFileObj = null;
+
+function showTab(id, el) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.remove('hidden');
+  if (el) el.classList.add('active');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function initUI() {
+  // Playbook cards
+  document.getElementById('playbookCards').innerHTML = PLAYBOOKS.map((p, idx) => `
+    <div class="card clickable" onclick="applyPlaybook(${idx})">
+      <div style="font-size:15px;font-weight:700;">${p.icon} ${p.title}</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5;">${p.desc}</div>
+      <div style="margin-top:10px;font-size:12px;color:var(--accent);font-weight:600;">點擊套用此流程 →</div>
+    </div>
+  `).join('');
+
+  // Strategy chips
+  document.getElementById('strategyChips').innerHTML = STRATEGIES.map(s => `
+    <label class="chip">
+      <input type="checkbox" class="strat-chk" value="${s.id}" ${s.checked ? 'checked' : ''} onchange="rebuildCommands()">
+      <div><b>${s.name}</b><span class="cdesc">${s.desc}</span></div>
+    </label>
+  `).join('');
+
+  renderFileList();
+  rebuildCommands();
+}
+
+function applyPlaybook(idx) {
+  const p = PLAYBOOKS[idx].preset;
+  document.getElementById('inProject').value = p.project;
+  document.getElementById('inMarket').value = p.market;
+  document.getElementById('inSymbols').value = p.symbols;
+  document.getElementById('inStart').value = p.start;
+  document.getElementById('inTag').value = p.tag;
+  document.getElementById('inWorkflow').value = p.wf;
+  document.getElementById('inExtra').value = p.extra || "";
+  document.querySelectorAll('.strat-chk').forEach(chk => {
+    chk.checked = p.strats.includes(chk.value);
+  });
+  rebuildCommands();
+  showTab('builder', document.querySelectorAll('.tab')[1]);
+  toast(`已套用情境：${PLAYBOOKS[idx].title}`);
+}
+
+function onMarketChange() {
+  const m = document.getElementById('inMarket').value;
+  if (m === 'TW' && document.getElementById('inSymbols').value === 'INTC, QCOM') {
+    document.getElementById('inSymbols').value = '2330.TW, 2454.TW';
+  }
+}
+
+function rebuildCommands() {
+  const proj = document.getElementById('inProject').value.trim() || 'my_project';
+  const mkt = document.getElementById('inMarket').value;
+  const syms = document.getElementById('inSymbols').value.trim();
+  const start = document.getElementById('inStart').value || '2020-01-01';
+  const tag = document.getElementById('inTag').value.trim() || 'advice';
+  const wfPath = document.getElementById('inWorkflow').value;
+  const extra = document.getElementById('inExtra').value.trim();
+
+  const strats = [...document.querySelectorAll('.strat-chk:checked')].map(c => c.value);
+  const sizing = document.getElementById('inSizing').value;
+  const stopAtr = document.getElementById('inStopAtr').value;
+  const bePct = document.getElementById('inBePct').value;
+  const trailAtr = document.getElementById('inTrailAtr').value;
+
+  const optBt = document.getElementById('optBacktest').checked;
+  const optRisk = document.getElementById('optRisk').checked;
+  const optRob = document.getElementById('optRob').checked;
+  const optEvents = document.getElementById('optEvents').checked;
+  const optOverheat = document.getElementById('optOverheat').checked;
+  const optPreEarn = document.getElementById('optPreEarn').checked;
+  const optViewer = document.getElementById('optViewer').checked;
+  const optNewTs = document.getElementById('optNewTs').checked;
+
+  // 1. Antigravity Chat Prompt
+  const chatLines = [];
+  if (wfPath !== 'CUSTOM') {
+    chatLines.push(`run @${wfPath} for project ${proj}`);
+  } else {
+    chatLines.push(`針對專案 ${proj} 執行自訂量化模組任務`);
+  }
+  chatLines.push(`- 市場 / 標的：${mkt} | SYMBOLS=[${syms}] | START_DATE="${start}" | RUN_TAG="${tag}"`);
+  if (strats.length) chatLines.push(`- MIX_STRATEGIES: [${strats.map(s => `"${s}"`).join(', ')}]`);
+  chatLines.push(`- RUN_BACKTEST=${optBt} | ROBUSTNESS_GATE=${optRob} | RISK_OVERLAY=${optRisk} (sizing_mode="${sizing}", hard_stop=${stopAtr}xATR, breakeven=+${bePct}%, chandelier=${trailAtr}xATR, overheat_trim=${optOverheat}, pre_earnings_trim=${optPreEarn})`);
+  const extras = [];
+  if (optEvents) extras.push("串接 events_news.db（財報/SEC 8-K/異常波動）");
+  if (optViewer) extras.push("更新 review.db 與 review_viewer.html");
+  if (optNewTs) extras.push("建立全新時間戳報告目錄並追加至 INDEX.md");
+  if (extras.length) chatLines.push(`- 交付要求：${extras.join('、')}`);
+  if (extra) chatLines.push(`- 補充指令：${extra}`);
+  const chatCmd = chatLines.join('\n');
+  document.getElementById('outChat').textContent = chatCmd;
+
+  // 2. Antigravity CLI (agy) Command
+  const singleLinePrompt = chatCmd.replace(/\n/g, ' ; ').replace(/"/g, '\\"');
+  document.getElementById('outAgy').textContent = `agy -p "${singleLinePrompt}"`;
+
+  // 3. Deterministic Local Python Commands
+  const symsCsv = syms.split(',').map(s => s.trim().toUpperCase()).filter(Boolean).join(',');
+  const pyLines = [
+    `# 1. 更新最新行情與技術指標 (data_generator)`,
+    `.\\.venv\\Scripts\\python.exe -m modules.data_generator --target ${symsCsv || 'INTC,QCOM'} --year 2026 --output-dir data/${proj}`,
+    ``,
+    `# 2. 按需增量更新財報 / SEC 8-K / 異常波動事件庫 (events_news.db)`,
+    `.\\.venv\\Scripts\\python.exe data\\sox_mag7_price_vol_types\\update_events_news.py --symbols ${symsCsv || 'INTC,QCOM'}`,
+    ``,
+    `# 3. 開啟通用 SQLite 檢視器檢視專案資料庫`,
+    `.\\.venv\\Scripts\\python.exe -m modules.viewer --serve --db projects/${proj}/review.db`
+  ];
+  document.getElementById('outPy').textContent = pyLines.join('\n');
+}
+
+function copyText(elId) {
+  const txt = document.getElementById(elId).textContent;
+  navigator.clipboard.writeText(txt).then(() => toast("已複製到剪貼簿！"));
+}
+
+function downloadPs1() {
+  const content = document.getElementById('outPy').textContent;
+  const proj = document.getElementById('inProject').value.trim() || 'quant';
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `run_${proj}_tasks.ps1`;
+  a.click();
+  toast(`已下載 run_${proj}_tasks.ps1`);
+}
+
+// File System Access API (Zero-Server Local Read/Write in Chrome/Edge)
+async function connectWorkspace() {
+  if (!window.showDirectoryPicker) {
+    alert("此瀏覽器不支援 File System Access API，請使用 Chrome 或 Edge 開啟本頁面。");
+    return;
+  }
+  try {
+    dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    workspaceFiles = [];
+    const targetDirs = ['prompts', 'workflow', 'projects'];
+    for (const dName of targetDirs) {
+      try {
+        const sub = await dirHandle.getDirectoryHandle(dName);
+        await scanDir(sub, dName);
+      } catch (_) {}
+    }
+    workspaceFiles.sort((a, b) => a.path.localeCompare(b.path));
+    document.getElementById('fsStatus').className = 'badge b-ok';
+    document.getElementById('fsStatus').textContent = `已連結本機工作區（${workspaceFiles.length} 檔可讀寫）`;
+    renderFileList();
+    toast(`成功連結工作區！共掃描 ${workspaceFiles.length} 個 Prompt / 設定 / 報告檔`);
+  } catch (e) {
+    if (e.name !== 'AbortError') alert("連結失敗：" + e.message);
+  }
+}
+
+async function scanDir(handle, prefix) {
+  for await (const [name, entry] of handle.entries()) {
+    const p = `${prefix}/${name}`;
+    if (entry.kind === 'directory') {
+      if (name === '__pycache__' || name === 'quantstats') continue;
+      await scanDir(entry, p);
+    } else if (name.endsWith('.md') || name.endsWith('.json')) {
+      workspaceFiles.push({ path: p, handle: entry });
+    }
+  }
+}
+
+function renderFileList() {
+  const q = (document.getElementById('fileFilter').value || '').toLowerCase();
+  const list = workspaceFiles.length > 0
+    ? workspaceFiles.filter(f => f.path.toLowerCase().includes(q))
+    : BUILTIN_FILES.filter(p => p.toLowerCase().includes(q)).map(p => ({ path: p, handle: null }));
+
+  document.getElementById('fileList').innerHTML = list.map((f, idx) => {
+    const act = activeFileObj && activeFileObj.path === f.path ? 'active' : '';
+    return `<div class="file-item ${act}" onclick="openFile('${f.path}')"><span>${f.path}</span></div>`;
+  }).join('');
+}
+
+async function openFile(path) {
+  const found = workspaceFiles.find(f => f.path === path);
+  document.getElementById('activeFilePath').textContent = path;
+  if (!found || !found.handle) {
+    activeFileObj = null;
+    document.getElementById('btnSaveFile').disabled = true;
+    document.getElementById('fileEditor').value = `[唯讀預覽提示]\n尚未連結本機工作區資料夾。\n\n請點擊右上角「📂 連結本機工作區 (ai_quant_trade)」並選擇專案根目錄，即可直接在此讀取、編輯並存檔：\n${path}`;
+    return;
+  }
+  activeFileObj = found;
+  const file = await found.handle.getFile();
+  document.getElementById('fileEditor').value = await file.text();
+  document.getElementById('btnSaveFile').disabled = false;
+  renderFileList();
+}
+
+async function saveActiveFile() {
+  if (!activeFileObj || !activeFileObj.handle) return;
+  try {
+    const writable = await activeFileObj.handle.createWritable();
+    await writable.write(document.getElementById('fileEditor').value);
+    await writable.close();
+    toast(`已儲存：${activeFileObj.path}`);
+  } catch (e) {
+    alert("儲存失敗：" + e.message);
+  }
+}
+
+initUI();
+</script>
+</body>
+</html>

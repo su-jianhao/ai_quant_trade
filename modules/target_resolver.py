@@ -25,6 +25,30 @@ TW50_CONSTITUENTS: List[str] = [
     "2912.TW", "5871.TW", "6669.TW", "6505.TW", "6446.TW",
 ]
 
+# 台灣中型 100 指數 (0051) 核心 100 檔成分股 (TWSE)
+TW100_CONSTITUENTS: List[str] = [
+    "2379.TW", "3661.TW", "1301.TW", "3481.TW", "3034.TW",
+    "1326.TW", "2801.TW", "3044.TW", "3189.TW", "2313.TW",
+    "5876.TW", "6770.TW", "2002.TW", "2409.TW", "1101.TW",
+    "4938.TW", "2404.TW", "6239.TW", "3533.TW", "1590.TW",
+    "2376.TW", "2615.TW", "2207.TW", "2337.TW", "6415.TW",
+    "3036.TW", "5871.TW", "2834.TW", "2618.TW", "3702.TW",
+    "2324.TW", "6213.TW", "2912.TW", "8996.TW", "2356.TW",
+    "2609.TW", "6805.TW", "6515.TW", "1605.TW", "6139.TW",
+    "2347.TW", "2049.TW", "2377.TW", "1402.TW", "5434.TW",
+    "1102.TW", "1802.TW", "2353.TW", "2474.TW", "2027.TW",
+    "2492.TW", "6257.TW", "1504.TW", "1560.TW", "1519.TW",
+    "6531.TW", "1476.TW", "2812.TW", "2455.TW", "2610.TW",
+    "6919.TW", "6285.TW", "6442.TW", "3026.TW", "3706.TW",
+    "8464.TW", "9904.TW", "2385.TW", "3023.TW", "1513.TW",
+    "6409.TW", "7750.TW", "3006.TW", "2354.TW", "2542.TW",
+    "2105.TW", "3167.TW", "1717.TW", "2633.TW", "1503.TW",
+    "9945.TW", "2451.TW", "3005.TW", "5269.TW", "6789.TW",
+    "6691.TW", "6196.TW", "7610.TW", "1229.TW", "8210.TW",
+    "3030.TW", "6526.TW", "6949.TW", "2467.TW", "9910.TW",
+    "2646.TW", "6781.TW", "2838.TW", "3532.TW", "2645.TW",
+]
+
 # 費城半導體指數 (SOX) 核心 30 檔成分股
 SOX_CONSTITUENTS: List[str] = [
     "NVDA", "AVGO", "TSM", "AMD", "QCOM", "TXN", "INTC", "MU", "AMAT", "LRCX",
@@ -39,6 +63,8 @@ MAG7_CONSTITUENTS: List[str] = [
 POOL_ALIASES = {
     "tw50": ("TW50", "0050.TW", "TW"),
     "0050": ("TW50", "0050.TW", "TW"),
+    "tw100": ("TW100", "0051.TW", "TW"),
+    "0051": ("TW100", "0051.TW", "TW"),
     "sox": ("SOX", "SOXX", "US"),
     "soxx": ("SOX", "SOXX", "US"),
     "sp500": ("SP500", "SPY", "US"),
@@ -131,6 +157,8 @@ def resolve_target(target: str, output_dir: Optional[str] = None) -> TargetSpec:
         pool_name, benchmark, market = POOL_ALIASES[key]
         if pool_name == "TW50":
             tickers = list(TW50_CONSTITUENTS)
+        elif pool_name == "TW100":
+            tickers = list(TW100_CONSTITUENTS)
         elif pool_name == "SOX":
             tickers = list(SOX_CONSTITUENTS)
         elif pool_name == "MAG7":

@@ -54,7 +54,7 @@
 - **總論**：改進模組與測試模組的定位與回饋閉環
 - **逐筆分析**：交易明細歸因與損益拆解
 - **改進**：依據分析結果進行策略與參數優化
-- 績效覆盤與迭代工作流：[prompts/strategy/quantitative_performance_workflow.md](prompts/strategy/quantitative_performance_workflow.md)
+- 績效覆盤、Brinson (BHB/BF) 歸因與迭代工作流：[prompts/strategy/quantitative_performance_workflow.md](prompts/strategy/quantitative_performance_workflow.md)（因子失效與半衰期診斷併入 [prompts/factors.md](prompts/factors.md)）
 - 穩健性檢驗六維矩陣：[prompts/analyze/robustness_testing_taxonomy.md](prompts/analyze/robustness_testing_taxonomy.md)
 - 趨勢轉折剖析：[prompts/analyze/trend_change.md](prompts/analyze/trend_change.md)
 - 個股綜合診斷與情境復盤：[prompts/stock_analysis.md](prompts/stock_analysis.md)

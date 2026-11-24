@@ -192,6 +192,12 @@ def aggregate_monthly_factors(daily_df: pd.DataFrame, chips_df: pd.DataFrame | N
 
     if chips_df is not None and not chips_df.empty:
         cdf = chips_df.copy()
+        for col in [
+            "foreign_net_lots", "trust_net_lots", "dealer_net_lots",
+            "inst_total_net_lots", "margin_net_change", "short_margin_ratio",
+        ]:
+            if col not in cdf.columns:
+                cdf[col] = np.nan
         cdf["month"] = pd.to_datetime(cdf["date"]).dt.to_period("M").astype(str)
         c_agg = cdf.groupby("month").agg(
             foreign_net_lots=("foreign_net_lots", "sum"),

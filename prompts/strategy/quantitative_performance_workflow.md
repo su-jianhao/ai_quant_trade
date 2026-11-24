@@ -41,19 +41,36 @@ flowchart TD
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│ 1. 宏觀因子歸因 (Macro & Style Factor Attribution)     │
-│    R_p - R_f = α + β_market * MKT + β_size * SMB + ...  │
-│    -> 剝離大盤 Beta 與市值/動量因子，確認是否存在真 Alpha│
+│ 1. Brinson (BHB / BF) 產業配置 vs 選股歸因             │
+│    Active Return = Allocation + Selection + Interaction│
+│    -> 區分「押對強勢產業」vs「同業內挑對真龍頭 Alpha」   │
 ├────────────────────────────────────────────────────────┤
-│ 2. 時序狀態歸因 (Timeline & Cash Drag Attribution)      │
-│    總週期 = 【持股主升段】+【假摔停利點】+【場外空倉等待】 │
-│    -> 計算場外持幣的機會成本 (Cash Drag)                │
+│ 2. CAPM Alpha/Beta 與因子消融歸因 (Factor Attribution) │
+│    R_p - R_f = α + β * (R_b - R_f) + ε                 │
+│    -> 剝離市場 Beta，並以 Leave-One-Out 量化各因子貢獻  │
 ├────────────────────────────────────────────────────────┤
-│ 3. 交易摩擦歸因 (Friction & Microstructure Attribution)│
-│    Gross PnL - (佣金 + 證交稅 + 滑價衝擊) = Net PnL     │
-│    -> 評估周轉率過高帶來的無謂損耗                      │
+│ 3. 時序狀態與交易摩擦歸因 (Cash Drag & Friction)       │
+│    Gross PnL - (佣金 + 證交稅 + 滑價) = Net PnL         │
+│    -> 計算空倉機會成本、個股集中度與周轉率損耗          │
 └────────────────────────────────────────────────────────┘
 ```
+
+### 2.1 Brinson 雙模型標準拆解 (BHB & BF)
+設組合與基準在產業 $i$ 之權重與報酬分別為 $(w_{p,i}, R_{p,i})$、$(w_{b,i}, R_{b,i})$，基準總報酬為 $R_b = \sum_i w_{b,i} R_{b,i}$：
+- **配置效應 ($A_i$)**：
+  - **BHB (Brinson-Hood-Beebower)**：$(w_{p,i} - w_{b,i}) \cdot R_{b,i}$
+  - **BF (Brinson-Fachler，主判決口徑)**：$(w_{p,i} - w_{b,i}) \cdot (R_{b,i} - R_b)$（扣除大盤總報酬，超配跑輸大盤的弱勢產業會正確顯示負貢獻）
+- **選股效應 ($S_i$)**：$w_{b,i} \cdot (R_{p,i} - R_{b,i})$
+- **交互效應 ($I_i$)**：$(w_{p,i} - w_{b,i}) \cdot (R_{p,i} - R_{b,i})$（實務常將 $S_i + I_i$ 合併為「總選股效應」）
+- **多期連結與裁決**：多換倉期採 Carino 連結確保 $\sum (A_i + S_i + I_i) \equiv R_p - R_b$；若總選股效應佔比 $\ge 60\%$ 判為 `PURE_SELECTION_ALPHA`，若配置效應佔比 $\ge 60\%$ 判為 `SECTOR_BET_DRIVEN`（需檢查單一產業集中度上限）。
+
+### 2.2 CAPM 風格回歸、個股集中度與因子消融
+- **CAPM 回歸**：輸出年化 Jensen's Alpha（含 `t-stat`）、市場 `Beta`、$R^2$、Tracking Error 與 Information Ratio，確認是否以低 Beta 賺取顯著真 Alpha。
+- **個股集中度**：列出前 10 大淨損益個股與 Top 3 佔總淨利比例，嚴防「1 檔飆股掩蓋 9 檔毒瘤」。
+- **因子邊際消融 (Leave-One-Out)**：搭配 [`@prompts/factors.md`](../factors.md) 逐一拔除單因子重跑，輸出 $\Delta\text{Return}$ / $\Delta\text{Sharpe}$ / $\Delta\text{MDD}$ 定位核心引擎與拖油瓶。
+
+### 2.3 MAE / MFE 與洗盤賣飛審計（對應階段三）
+- 針對所有交易計算持有期最大浮虧 **MAE** 與最大浮盈 **MFE**；針對非基本面換倉之技術出場單，統計出場後 5 / 10 / 20 日反彈創高比例（**洗盤賣飛率**）與出場後平均漲跌，量化是否過早停利（可透過 `python -m modules.attribution_decay` 一鍵執行完整五大模組）。
 
 ---
 

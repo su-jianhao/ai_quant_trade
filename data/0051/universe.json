@@ -1,0 +1,916 @@
+{
+  "raw_target": "0051",
+  "slug": "0051",
+  "target_type": "pool",
+  "market": "TW",
+  "benchmark": "0051.TW",
+  "tickers": [
+    "2379.TW",
+    "3661.TW",
+    "1301.TW",
+    "3481.TW",
+    "3034.TW",
+    "1326.TW",
+    "2801.TW",
+    "3044.TW",
+    "3189.TW",
+    "2313.TW",
+    "5876.TW",
+    "6770.TW",
+    "2002.TW",
+    "2409.TW",
+    "1101.TW",
+    "4938.TW",
+    "2404.TW",
+    "6239.TW",
+    "3533.TW",
+    "1590.TW",
+    "2376.TW",
+    "2615.TW",
+    "2207.TW",
+    "2337.TW",
+    "6415.TW",
+    "3036.TW",
+    "5871.TW",
+    "2834.TW",
+    "2618.TW",
+    "3702.TW",
+    "2324.TW",
+    "6213.TW",
+    "2912.TW",
+    "8996.TW",
+    "2356.TW",
+    "2609.TW",
+    "6805.TW",
+    "6515.TW",
+    "1605.TW",
+    "6139.TW",
+    "2347.TW",
+    "2049.TW",
+    "2377.TW",
+    "1402.TW",
+    "5434.TW",
+    "1102.TW",
+    "1802.TW",
+    "2353.TW",
+    "2474.TW",
+    "2027.TW",
+    "2492.TW",
+    "6257.TW",
+    "1504.TW",
+    "1560.TW",
+    "1519.TW",
+    "6531.TW",
+    "1476.TW",
+    "2812.TW",
+    "2455.TW",
+    "2610.TW",
+    "6919.TW",
+    "6285.TW",
+    "6442.TW",
+    "3026.TW",
+    "3706.TW",
+    "8464.TW",
+    "9904.TW",
+    "2385.TW",
+    "3023.TW",
+    "1513.TW",
+    "6409.TW",
+    "7750.TW",
+    "3006.TW",
+    "2354.TW",
+    "2542.TW",
+    "2105.TW",
+    "3167.TW",
+    "1717.TW",
+    "2633.TW",
+    "1503.TW",
+    "9945.TW",
+    "2451.TW",
+    "3005.TW",
+    "5269.TW",
+    "6789.TW",
+    "6691.TW",
+    "6196.TW",
+    "7610.TW",
+    "1229.TW",
+    "8210.TW",
+    "3030.TW",
+    "6526.TW",
+    "6949.TW",
+    "2467.TW",
+    "9910.TW",
+    "2646.TW",
+    "6781.TW",
+    "2838.TW",
+    "3532.TW",
+    "2645.TW"
+  ],
+  "output_dir": "data\\0051",
+  "resolved_at": "2026-11-16T00:09:59",
+  "total_constituents": 100,
+  "success_count": 100,
+  "failed_count": 0,
+  "tickers_status": {
+    "2379.TW": {
+      "ok": true,
+      "name": "瑞昱",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3661.TW": {
+      "ok": true,
+      "name": "世芯-KY",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1301.TW": {
+      "ok": true,
+      "name": "台塑",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3481.TW": {
+      "ok": true,
+      "name": "群創",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3034.TW": {
+      "ok": true,
+      "name": "聯詠",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1326.TW": {
+      "ok": true,
+      "name": "台化",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2801.TW": {
+      "ok": true,
+      "name": "彰銀",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3044.TW": {
+      "ok": true,
+      "name": "健鼎",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3189.TW": {
+      "ok": true,
+      "name": "景碩",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2313.TW": {
+      "ok": true,
+      "name": "華通",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "5876.TW": {
+      "ok": true,
+      "name": "上海商銀",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6770.TW": {
+      "ok": true,
+      "name": "力積電",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2002.TW": {
+      "ok": true,
+      "name": "中鋼",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2409.TW": {
+      "ok": true,
+      "name": "友達",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1101.TW": {
+      "ok": true,
+      "name": "台泥",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "4938.TW": {
+      "ok": true,
+      "name": "和碩",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2404.TW": {
+      "ok": true,
+      "name": "漢唐",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6239.TW": {
+      "ok": true,
+      "name": "力成",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3533.TW": {
+      "ok": true,
+      "name": "嘉澤",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1590.TW": {
+      "ok": true,
+      "name": "亞德客-KY",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2376.TW": {
+      "ok": true,
+      "name": "技嘉",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2615.TW": {
+      "ok": true,
+      "name": "萬海",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2207.TW": {
+      "ok": true,
+      "name": "和泰車",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2337.TW": {
+      "ok": true,
+      "name": "旺宏",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6415.TW": {
+      "ok": true,
+      "name": "矽力*-KY",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3036.TW": {
+      "ok": true,
+      "name": "文曄",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "5871.TW": {
+      "ok": true,
+      "name": "中租-KY",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2834.TW": {
+      "ok": true,
+      "name": "臺企銀",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2618.TW": {
+      "ok": true,
+      "name": "長榮航",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3702.TW": {
+      "ok": true,
+      "name": "大聯大",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2324.TW": {
+      "ok": true,
+      "name": "仁寶",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6213.TW": {
+      "ok": true,
+      "name": "聯茂",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2912.TW": {
+      "ok": true,
+      "name": "統一超",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "8996.TW": {
+      "ok": true,
+      "name": "高力",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2356.TW": {
+      "ok": true,
+      "name": "英業達",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2609.TW": {
+      "ok": true,
+      "name": "陽明",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6805.TW": {
+      "ok": true,
+      "name": "富世達",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6515.TW": {
+      "ok": true,
+      "name": "穎崴",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1605.TW": {
+      "ok": true,
+      "name": "華新",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6139.TW": {
+      "ok": true,
+      "name": "亞翔",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2347.TW": {
+      "ok": true,
+      "name": "聯強",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2049.TW": {
+      "ok": true,
+      "name": "上銀",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2377.TW": {
+      "ok": true,
+      "name": "微星",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1402.TW": {
+      "ok": true,
+      "name": "遠東新",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "5434.TW": {
+      "ok": true,
+      "name": "崇越",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1102.TW": {
+      "ok": true,
+      "name": "亞泥",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1802.TW": {
+      "ok": true,
+      "name": "台玻",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2353.TW": {
+      "ok": true,
+      "name": "宏碁",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2474.TW": {
+      "ok": true,
+      "name": "可成",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2027.TW": {
+      "ok": true,
+      "name": "大成鋼",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2492.TW": {
+      "ok": true,
+      "name": "華新科",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6257.TW": {
+      "ok": true,
+      "name": "矽格",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1504.TW": {
+      "ok": true,
+      "name": "東元",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1560.TW": {
+      "ok": true,
+      "name": "中砂",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1519.TW": {
+      "ok": true,
+      "name": "華城",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6531.TW": {
+      "ok": true,
+      "name": "愛普*",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1476.TW": {
+      "ok": true,
+      "name": "儒鴻",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2812.TW": {
+      "ok": true,
+      "name": "台中銀",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2455.TW": {
+      "ok": true,
+      "name": "全新",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2610.TW": {
+      "ok": true,
+      "name": "華航",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6919.TW": {
+      "ok": true,
+      "name": "康霈*",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6285.TW": {
+      "ok": true,
+      "name": "啟碁",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6442.TW": {
+      "ok": true,
+      "name": "光聖",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3026.TW": {
+      "ok": true,
+      "name": "禾伸堂",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3706.TW": {
+      "ok": true,
+      "name": "神達",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "8464.TW": {
+      "ok": true,
+      "name": "億豐",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "9904.TW": {
+      "ok": true,
+      "name": "寶成",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2385.TW": {
+      "ok": true,
+      "name": "群光",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3023.TW": {
+      "ok": true,
+      "name": "信邦",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1513.TW": {
+      "ok": true,
+      "name": "中興電",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "6409.TW": {
+      "ok": true,
+      "name": "旭隼",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "7750.TW": {
+      "ok": true,
+      "name": "新代",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3006.TW": {
+      "ok": true,
+      "name": "晶豪科",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2354.TW": {
+      "ok": true,
+      "name": "鴻準",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2542.TW": {
+      "ok": true,
+      "name": "興富發",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2105.TW": {
+      "ok": true,
+      "name": "正新",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "3167.TW": {
+      "ok": true,
+      "name": "大量",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "1717.TW": {
+      "ok": true,
+      "name": "長興",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 208
+    },
+    "2633.TW": {
+      "ok": true,
+      "name": "2633",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "1503.TW": {
+      "ok": true,
+      "name": "1503",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "9945.TW": {
+      "ok": true,
+      "name": "9945",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "2451.TW": {
+      "ok": true,
+      "name": "2451",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "3005.TW": {
+      "ok": true,
+      "name": "3005",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "5269.TW": {
+      "ok": true,
+      "name": "5269",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "6789.TW": {
+      "ok": true,
+      "name": "6789",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "6691.TW": {
+      "ok": true,
+      "name": "6691",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "6196.TW": {
+      "ok": true,
+      "name": "6196",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "7610.TW": {
+      "ok": true,
+      "name": "7610",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "1229.TW": {
+      "ok": true,
+      "name": "1229",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "8210.TW": {
+      "ok": true,
+      "name": "8210",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "3030.TW": {
+      "ok": true,
+      "name": "3030",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "6526.TW": {
+      "ok": true,
+      "name": "6526",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "6949.TW": {
+      "ok": true,
+      "name": "6949",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "2467.TW": {
+      "ok": true,
+      "name": "2467",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "9910.TW": {
+      "ok": true,
+      "name": "9910",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "2646.TW": {
+      "ok": true,
+      "name": "2646",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "6781.TW": {
+      "ok": true,
+      "name": "6781",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "2838.TW": {
+      "ok": true,
+      "name": "2838",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "3532.TW": {
+      "ok": true,
+      "name": "3532",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    },
+    "2645.TW": {
+      "ok": true,
+      "name": "2645",
+      "rows": 209,
+      "start_date": "2026-01-02",
+      "end_date": "2026-11-13",
+      "chips_rows": 0
+    }
+  }
+}

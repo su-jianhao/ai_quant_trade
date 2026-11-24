@@ -1,0 +1,23 @@
+{
+  "run_id": "20261123_0125_risk_managed_comparison",
+  "test_time": "2026-11-23 01:25:00",
+  "project_name": "intc_qcom",
+  "data_end_date": "2026-11-20",
+  "risk_overlay": "4-Tier (Hard Stop max(6%,2*ATR) + BE +8% + Chandelier 2.5*ATR + Vol Scale & DD Governor)",
+  "trades_dir": "projects/intc_qcom/trades/20261123_0125_multi4_risk_managed_intc_qcom",
+  "report_path": "projects/intc_qcom/reports/20261123_0125_risk_managed_comparison/trade_advice.md",
+  "top_risk_managed": {
+    "INTC": {
+      "strategy": "macd",
+      "model_key": "bb_trailing",
+      "sharpe_rm": 0.67,
+      "mdd_rm": -22.0
+    },
+    "QCOM": {
+      "strategy": "bollinger",
+      "model_key": "bw_expand",
+      "sharpe_rm": 0.41,
+      "mdd_rm": -14.15
+    }
+  }
+}

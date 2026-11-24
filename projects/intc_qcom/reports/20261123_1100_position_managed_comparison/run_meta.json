@@ -1,0 +1,9 @@
+{
+  "run_id": "20261123_1100_position_managed_comparison",
+  "test_time": "2026-11-23 11:00:00",
+  "project_name": "intc_qcom",
+  "data_end_date": "2026-11-20",
+  "overall_verdict": "POS-MGMT-PASS",
+  "report_path": "projects/intc_qcom/reports/20261123_1100_position_managed_comparison/trade_advice.md",
+  "trades_dir": "projects/intc_qcom/trades/20261123_1100_pos_mgmt_intc_qcom"
+}

@@ -182,11 +182,21 @@
   3. **及格標準**：收益必須呈現嚴格的單調遞增（或遞減），即 $R_{Q1} > R_{Q2} > R_{Q3} > R_{Q4} > R_{Q5}$。
   4. **多空對沖年化報酬 (Long-Short Spread)**：做多 Q1、做空 Q5 的對沖淨值曲線必須穩定平滑，Sharpe Ratio $\ge 1.5$。
 
-### 4. 因子半衰期與衰減分析 (Factor Half-Life & Decay Curve)
-* 計算因子在未來 $N \in [1, 2, 3, 5, 10, 20, 60]$ 天的 IC 衰減曲線：
+### 4. 因子半衰期、失效與動態衰減診斷 (Factor Half-Life, Decay & Failure Diagnosis)
+* **前瞻 IC 半衰期衰減曲線 (Horizon Decay)**：計算因子在未來 $N \in [5, 10, 20, 40, 60, 120]$ 個交易日的 Rank IC，估算 IC 衰減至一半的天數以決定最佳換倉週期：
   * **高頻/短週期板機**（如 KDJ、開盤跳空量比）：半衰期 $1 \sim 3$ 天。
   * **中週期動能**（如 MACD、RSI 趨勢）：半衰期 $5 \sim 15$ 天。
-  * **低頻基本面/籌碼**（如投信連續買超、月營收 YoY）：半衰期 $20 \sim 60$ 天。
+  * **低頻基本面/籌碼**（如 ROE、淨利率、低負債、投信買超）：半衰期 $20 \sim 120$ 天。
+* **滾動 IC 與分市況條件失效切片 (Regime-Conditional IC Failure Audit)**：
+  * 逐期追蹤滾動 IC 與累積 IC 曲線（平緩＝鈍化、向下轉折＝反轉），並依市況切分為 **強多頭主升段 (`BULL_UP`)** 與 **回檔／風格輪動段 (`PULLBACK_CHOP`)** 分別計算 Rank IC。
+  * **因子健康狀態裁決**：
+    * `ACTIVE`（全天候有效）：全期 $\text{Mean IC} \ge 0.03$ 且多空兩段皆為正；
+    * `REGIME_DEPENDENT`（市況分化／風格輪動）：多頭段與回檔段 IC 呈反向（如成長牛市 ROE 強、估值負，輪動段估值強、ROE 負），宜與互補因子組合對沖而非直接淘汰；
+    * `DECAYED / INVERTED`（結構失效／反轉）：多空兩段皆持續負向或長期歸零，應降權或剪枝。
+* **多因子邊際貢獻消融 (Leave-One-Out Factor Ablation)**：
+  * 針對合成多因子模型，依序拔除單一因子重跑回測，計算 $\Delta\text{Return}_k = R_{\text{Full}} - R_{-k}$、$\Delta\text{Sharpe}_k$ 與 $\Delta\text{MDD}_k$：
+    * $\Delta\text{Sharpe}_k > +0.10$ 判定為 **核心引擎 (`CORE DRIVER`)**；
+    * $\Delta\text{Sharpe}_k < -0.05$ 判定為 **負貢獻拖油瓶 (`DRAG / PRUNE`)**，優先調降權重或剔除。
 
 ---
 

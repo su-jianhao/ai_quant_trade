@@ -13,6 +13,8 @@
 | **3. KDJ 隨機指標** | [`kdj_strategy.md`](file:///home/jianhaos/project/ta/ta/prompts/strategy/kdj_strategy.md) | `baseline`, `no_chase`, `trend_filter`, `profit_lock`, `oversold_low`, `combo_refined`, `oversold_trend` | 微觀恐慌抄底；`oversold_low` 勝率 70.5%、單筆期望 $476.56，極致低吸 |
 | **4. RSI 相對強弱** | [`rsi_strategy.md`](file:///home/jianhaos/project/ta/ta/prompts/strategy/rsi_strategy.md) | `baseline`, `trend_filter`, `extreme_oversold`, `bullish_divergence`, `momentum_breakout`, `profit_lock`, `regime_adaptive` | `extreme_oversold` 全場勝率王 (81.3%) 與期望王 ($651.68)；`momentum_breakout` 捕獲主升浪 |
 | **5. 三位一體 (Grand Trinity)** | [`trinity_strategy.md`](file:///home/jianhaos/project/ta/ta/prompts/strategy/trinity_strategy.md) | `raw_trinity`, `macd_bb_fusion`, `bb_kdj_fusion`, `grand_trinity`, `regime_adaptive_trinity` | 機構級全天候防禦盾牌；4 階風控將尾部最大回撤 (MDD) 壓制至全場最低 |
+| **6. 巴菲特護城河選股 (Buffett Value-Quality)** | [`buffett_value_strategy.md`](buffett_value_strategy.md) | `buffett_full_score_top10`, `buffett_moat_compounder`, `buffett_classic_roe_value`, `buffett_pure_roe_top10` + 技術面進出場增強 | 大型權值龍頭（如 TW50）基本面 8 因子 PIT 選股 + 技術面/風控進出場對比驗證；`buffett_full_score_top10` Sharpe 3.57、MDD -8.97% |
+| **7. DSA 15 大內置策略庫 (`daily_stock_analysis`)** | [`dsa_15_strategies.md`](dsa_15_strategies.md) | `emotion_cycle`, `box_oscillation`, `growth_quality`, `wave_theory`, `bull_trend` 等 15 種策略 | 完整移植自 `daily_stock_analysis` 15 大策略（可透過 `modules/backtest_15_strategies_tw50.py` 一鍵量化評比）；TW50 以 `emotion_cycle` (Sharpe 2.84) 與 `box_oscillation` (MDD -4.86%) 最強 |
 
 ---
 

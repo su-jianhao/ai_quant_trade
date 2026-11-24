@@ -1,0 +1,9 @@
+{
+  "run_id": "20261123_0158_regime_router_macd_rsi",
+  "test_time": "2026-11-23 01:58:00",
+  "project_name": "intc_qcom",
+  "data_end_date": "2026-11-20",
+  "overall_verdict": "ROUTER-PASS",
+  "report_path": "projects/intc_qcom/reports/20261123_0158_regime_router_macd_rsi/trade_advice.md",
+  "trades_dir": "projects/intc_qcom/trades/20261123_0158_regime_router"
+}

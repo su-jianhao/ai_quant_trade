@@ -115,6 +115,53 @@
 
 ---
 
+### 🧭 信心度動態倉位控制與加減倉引擎 (Confidence-Driven Position Management & Pyramiding)
+
+為避免傳統「全買 100% / 全賣 0%」造成的高摩擦與心理衝擊，本模組作為**所有策略共用之統一倉位管理引擎**，與策略層維持清晰邊界：
+- **策略層職責**：只輸出方向與標準化信心度分數 `confidence_score`（`0 ~ 100`，由趨勢、動能、量價、多策略共識計算，不寫死倉位）。
+- **本模組職責**：接收 `confidence_score`，結合浮盈安全墊、波動率、事件窗口與投組上限，輸出最終可執行之**目標倉位與加減倉股數**。
+
+#### 1. 信心度四階梯目標倉位與遲滯緩衝帶 (Tiered Exposure & Hysteresis Deadband)
+- **目標倉位階梯**：
+  | 信心度 `confidence_score` | 目標基準倉位 `W_conf` | 動作定位 |
+  |:---:|:---:|:---|
+  | `< 40` | **`0%`** | 趨勢破壞／空頭，清倉觀望 |
+  | `40 ~ 59` | **`0%`（空倉） / `35%`（已持倉減碼）** | 轉弱觀察帶：空倉者不進場；重倉者先減碼留底倉 |
+  | `60 ~ 74` | **`40%`** | 試探底倉（須連續 `2` 個交易日確認） |
+  | `75 ~ 84` | **`75%`** | 順勢金字塔加碼（須通過浮盈安全墊檢核） |
+  | `>= 85` | **`100%`** | 多維共振主升滿倉（須通過浮盈安全墊檢核） |
+- **遲滯緩衝防抖（Hysteresis Deadband）**：
+  - 加倉與減倉門檻刻意錯開（例如 `>= 75` 連續 2 天才加碼至 `75%`，但跌破 `< 60` 連續 2 天才減回 `40%`；中間 `60 ~ 75` 維持原倉不動）。
+  - 最小再平衡幅度限制：當 $|\text{Target Weight} - \text{Current Weight}| < 15\%$ 時**不執行微調**，杜絕頻繁小額加減倉消耗手續費。
+
+#### 2. 加減倉四大鐵律 (Position Sizing & Pyramiding Guardrails)
+1. **嚴禁虧損攤平（Never Average Down）**：
+   - 任何加倉（`ADD / PYRAMID`）指令，必須滿足**既有持倉浮盈 $\ge +5\% \sim +8\%$**（且停損線可同步上移至保本附近）；若當前持倉處於虧損狀態，無論 `confidence_score` 多高，一律禁止加碼。
+2. **波動率與單筆風險預算雙重上限 (ATR Risk Budget × Vol Scaling)**：
+   $$\text{Stop Distance} = \max\Big(P_{\text{entry}} \times 0.06, \; 2.0 \times \text{ATR}_{14}\Big)$$
+   $$\text{Risk-Budget Cap Shares} = \left\lfloor \frac{\text{Total Equity} \times \text{Risk Budget \% (1.5\%)}}{\text{Stop Distance}} \right\rfloor$$
+   $$\text{Final Target Notional} = \min\!\Big(\text{Max Single Cap},\; \text{Base Notional} \times W_{\text{conf}} \times \min\!\Big(1.0,\; \frac{\text{Target Vol}}{\text{Asset } \text{HV}_{60}}\Big) \times \text{DD Scaler} \times \text{Event Scaler}\Big)$$
+3. **重大事件前主動降倉 (Pre-Event De-Risking)**：
+   - 距離財報發布日（對接 `@prompts/data/event_dates.md` / `events_news.db`）$\le 3$ 個交易日且無足夠浮盈緩衝時，自動設 `Event Scaler = 0.5` 且凍結加碼。
+4. **慢加快減與風控覆蓋權 (Slow In, Fast Out)**：
+   - **加倉要慢**：須滿足連續 `2~3` 天信心達標 ＋ 浮盈安全墊；
+   - **減倉要快**：高檔過熱（`RSI > 78` 或 `BIAS_50 > 25%`）可於 `1~2` 天內先減 `30%~50%`；觸及硬停損或 HWM 熔斷則 **0 延遲無條件覆蓋信心度全數離場**。
+
+#### 3. 實證避坑心得與可調彈性原則 (Empirical Lessons & Configurable Switches)
+> 基於 SOX 30 + Mag 7（38 檔、2020–2026）實測對照，下列規則**嚴禁寫死**，應依標的波動屬性透過專案 `config.json` 彈性開關與調整：
+
+- **可調模式開關（不綁死單一作法）**：
+  - `sizing_mode`：預設 **`"single_shot"`（依波動率一次到位，38 檔實證夏普與報酬最佳）**，保守型或大資金可切換為 **`"tiered_pyramid"`（信心階梯分批加減倉，回撤最低）**。
+  - `enable_pyramiding`（預設 `false`）、`enable_pre_earnings_trim`（預設 `false`）、`enable_overheat_trim`（預設 `true`）。
+  - 門檻彈性區間：`hard_stop_atr_mult` (`2.0 ~ 2.5`)、`breakeven_trigger_pct`（低波股 `8%~10%`／高波半導體 `12%~15%`）、`chandelier_atr_mult` (`2.5 ~ 3.0`)、`deadband_pct` (`15% ~ 25%`)。
+- **四大實證避坑提醒**：
+  1. **防雙重縮倉**：小底倉（如 `45%`）再疊加波動縮放會讓起漲部位過小、稀釋主升浪報酬。
+  2. **防過度加減倉**：頻繁 `ADD` 易墊高均價被正常震盪洗出，頻繁 `TRIM` 會提早賣飛大贏單；少動比亂動好。
+  3. **加碼停損留呼吸空間**：若啟用加碼，停損須維持至少 `2.0~2.5×ATR` 緩衝，切忌硬收至 `-4%` 遭隔日洗出。
+  4. **財報前降倉視風格選配**：高成長股主升常由財報跳空發動，強制財報前砍半雖降回撤但也可能錯失爆發段，故採選配開關。
+
+---
+
 ## 💻 生產級 Python 實裝參考架構 (Production-Grade Implementation)
 
 風控模組必須以獨立類別實裝，具備清晰的輸入與輸出介面：
@@ -282,6 +329,70 @@ class InstitutionalRiskEngine:
                 self.loss_counter[ticker] = 0
         else:
             self.loss_counter[ticker] = 0
+
+    def compute_target_position(
+        self,
+        ticker: str,
+        confidence_score: float,
+        price: float,
+        atr_14: float,
+        asset_hv60: float,
+        total_equity: float,
+        current_shares: int = 0,
+        avg_cost: float = 0.0,
+        days_to_earnings: Optional[int] = None,
+        risk_budget_pct: float = 0.015,
+        target_vol: float = 0.35,
+    ) -> Tuple[str, int, str]:
+        """
+        信心度動態倉位控制引擎 (Position Management & Pyramiding)：
+        接收策略層輸出之 confidence_score (0~100)，輸出 (action, delta_shares, reason)。
+        """
+        if price <= 0 or total_equity <= 0:
+            return ("HOLD", 0, "無效價格或權益")
+
+        # 1. 信心度階梯映射 (0% / 35% / 40% / 75% / 100%)
+        if confidence_score < 40.0:
+            w_conf = 0.0
+        elif confidence_score < 60.0:
+            w_conf = 0.35 if current_shares > 0 else 0.0
+        elif confidence_score < 75.0:
+            w_conf = 0.40
+        elif confidence_score < 85.0:
+            w_conf = 0.75
+        else:
+            w_conf = 1.00
+
+        # 2. 波動率縮倉 + 事件前降倉 + 單筆 ATR 風險預算上限
+        vol_scaler = min(1.0, target_vol / max(asset_hv60, 0.05))
+        event_scaler = 0.5 if (days_to_earnings is not None and 0 <= days_to_earnings <= 3) else 1.0
+        max_notional = total_equity * self.max_single_stock_pct * w_conf * vol_scaler * event_scaler
+
+        stop_dist = max(price * 0.06, 2.0 * atr_14)
+        risk_cap_shares = int((total_equity * risk_budget_pct) // stop_dist) if stop_dist > 0 else 0
+        target_shares = min(int(max_notional // price), risk_cap_shares) if w_conf > 0 else 0
+
+        # 3. 浮盈安全墊檢核（嚴禁虧損攤平）與遲滯緩衝（變動 < 15% 不微調）
+        if target_shares > current_shares:
+            if current_shares > 0 and avg_cost > 0:
+                gain_pct = (price - avg_cost) / avg_cost
+                if gain_pct < 0.05:
+                    return ("HOLD", 0, f"禁止虧損/低安全墊加碼（目前浮盈 {gain_pct*100:+.1f}% < +5%）")
+                if event_scaler < 1.0:
+                    return ("HOLD", 0, f"財報前 {days_to_earnings} 天凍結加碼")
+            if current_shares > 0 and (target_shares - current_shares) / max(target_shares, 1) < 0.15:
+                return ("HOLD", 0, "低於 15% 再平衡緩衝帶，維持原倉")
+            action = "BUY" if current_shares == 0 else "PYRAMID_ADD"
+            return (action, target_shares - current_shares, f"信心 {confidence_score:.0f} -> 目標 {target_shares} 股 (vol×{vol_scaler:.2f})")
+
+        if target_shares < current_shares:
+            if target_shares == 0:
+                return ("EXIT", current_shares, f"信心跌破 40 ({confidence_score:.0f}) 清倉")
+            if (current_shares - target_shares) / current_shares < 0.15:
+                return ("HOLD", 0, "低於 15% 再平衡緩衝帶，維持原倉")
+            return ("TRIM", current_shares - target_shares, f"信心回落至 {confidence_score:.0f}，減碼至 {target_shares} 股")
+
+        return ("HOLD", 0, "倉位已符合目標配置")
 ```
 
 ---
@@ -313,3 +424,4 @@ class InstitutionalRiskEngine:
 - [ ] **狀態機記憶維護**：是否在跨交易日準確持久化了各標的持倉成本均價、波段最高價與冷凍計時器？
 - [ ] **宏觀衍生品開關**：是否正確接入了台指期外資淨未平倉口數（Net OI）並設定了階梯閾值？
 - [ ] **冷卻與防洗盤**：是否存在連續虧損冷凍機制，杜絕報復性交易？
+- [ ] **信心度倉位管理與金字塔守門**：是否具備 `confidence_score (0~100)` 階梯控倉、15% 遲滯緩衝、嚴禁虧損攤平（浮盈 $\ge +5\%$ 才准加碼）與財報前降倉保護？

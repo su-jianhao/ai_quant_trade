@@ -1,0 +1,9 @@
+{
+  "run_id": "20261123_0202_router_v2_universal",
+  "test_time": "2026-11-23 02:02:00",
+  "project_name": "intc_qcom",
+  "data_end_date": "2026-11-20",
+  "overall_verdict": "ROUTER-V2-PASS",
+  "report_path": "projects/intc_qcom/reports/20261123_0202_router_v2_universal/trade_advice.md",
+  "trades_dir": "projects/intc_qcom/trades/20261123_0202_router_v2"
+}
