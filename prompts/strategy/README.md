@@ -15,6 +15,9 @@
 | **5. 三位一體 (Grand Trinity)** | [`trinity_strategy.md`](file:///home/jianhaos/project/ta/ta/prompts/strategy/trinity_strategy.md) | `raw_trinity`, `macd_bb_fusion`, `bb_kdj_fusion`, `grand_trinity`, `regime_adaptive_trinity` | 機構級全天候防禦盾牌；4 階風控將尾部最大回撤 (MDD) 壓制至全場最低 |
 | **6. 巴菲特護城河選股 (Buffett Value-Quality)** | [`buffett_value_strategy.md`](buffett_value_strategy.md) | `buffett_full_score_top10`, `buffett_moat_compounder`, `buffett_classic_roe_value`, `buffett_pure_roe_top10` + 技術面進出場增強 | 大型權值龍頭（如 TW50）基本面 8 因子 PIT 選股 + 技術面/風控進出場對比驗證；`buffett_full_score_top10` Sharpe 3.57、MDD -8.97% |
 | **7. DSA 15 大內置策略庫 (`daily_stock_analysis`)** | [`dsa_15_strategies.md`](dsa_15_strategies.md) | `emotion_cycle`, `box_oscillation`, `growth_quality`, `wave_theory`, `bull_trend` 等 15 種策略 | 完整移植自 `daily_stock_analysis` 15 大策略（可透過 `modules/backtest_15_strategies_tw50.py` 一鍵量化評比）；TW50 以 `emotion_cycle` (Sharpe 2.84) 與 `box_oscillation` (MDD -4.86%) 最強 |
+| **8. VWAP 機構成本與法人共振** | [`vwap_strategy.md`](vwap_strategy.md) | `vwap_baseline`, `vwap_pullback_trend`, `vwap_avwap_breakout`, `vwap_inst_combo` | **全專案純技術／籌碼總冠軍**：`vwap_inst_combo` 在 TW50 繳出 `+92.72%`、Sharpe `2.89`、Calmar `11.39`、MDD `-10.66%`、PF `4.60` |
+| **9. 神奇九轉 (TD Sequential)** | [`td_sequential_strategy.md`](td_sequential_strategy.md) | `td_baseline`, `td_confirm_rebound`, `td_trend_dip` | 時間計數轉折與減碼利器：`td_trend_dip`（多頭 TD7+ 回調買＋高九減半）將 MDD 壓至 `-7.96%`、勝率 `60.0%`、PF `3.67` |
+| **10. J-Law VCP & META 精兵狙擊** | [`jlaw_vcp_strategy.md`](jlaw_vcp_strategy.md) | `jlaw_01_vcp_raw`, `jlaw_02_vcp_rs_sma63`, `jlaw_03_meta_sniper`, `jlaw_04_meta_pullback` | **跨牛熊單筆品質 & 抗崩盤總冠軍**：美股 6 年實測 PF `3.14`、勝率 `64.8%`、盈虧比 `3.34x`、2022 熊市 MDD 僅 `-8.2%`（需大股票池或搭配底倉） |
 
 ---
 

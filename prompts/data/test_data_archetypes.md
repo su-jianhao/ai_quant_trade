@@ -34,6 +34,8 @@
 | **3. 泥淖無量假突破 (Choppy Noise)**| 頻繁向上假突破隨即反轉殺跌，造成連環停損 | 假突破頻率高，量能萎縮 | 2024 年末中小型股整理期 |
 | **4. 斷崖式急跌 (Flash Crash)** | 單日長黑下殺破月線、伴隨恐慌跳空 | 單日跌幅 $> 4\% \sim 7\%$ | 2024-08-05 股災、2026-10 崩盤 |
 
+> **常態互斥 vs 轉折事件 Overlay 分層原則**：上述狀態與 `UP / DOWN / CHOP × LOW / HIGH VOL` 屬於**嚴格互斥的常態狀態層**（每日僅歸屬 1 類，確保全週期歸因加總為 100%）。跨狀態切換的變盤視窗（`TRANS_PEAK_CRASH`、`TRANS_PEAK_CHOP`、`TRANS_BOTTOM_V`、`TRANS_BREAKOUT`）一律作為**獨立可重疊的轉折 Overlay 層**進行額外評測，詳見 [`@prompts/analyze/trend_change.md`](../analyze/trend_change.md)。
+
 ---
 
 ## 維度二：市值與流動性規模 (Size & Liquidity Dimension)

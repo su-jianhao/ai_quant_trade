@@ -15,6 +15,33 @@
 
 ---
 
+## 🧭 雙層分離架構：常態互斥狀態 vs 轉折事件 Overlay (State Layer vs Transition Overlay)
+
+為避免「轉折區間」破壞既有的 6 階段互斥市況分類（[`prompts/data/human_stage_trend_vol.md`](../data/human_stage_trend_vol.md)），系統嚴格採 **兩層物理分離**：
+
+```text
+時間軸：  |======== UP_HIGH_VOL ========|======== DOWN_HIGH_VOL ========|==== CHOP_LOW_VOL ====|
+【狀態層】 常態 6 類市況（嚴格互斥，每天只屬 1 類，6 類損益加總 = 100% 總損益）
+                        ╭──── Transition Overlay ────╮          ╭──── Transition Overlay ────╮
+【轉折層】 轉折事件視窗  │  TRANS_PEAK_CRASH (UP→DN)  │          │  TRANS_BOTTOM_V (DN→UP)    │
+（可重疊） 獨立評分考卷  │  [T0-10d 派發 | T0+20d 破位] │          │  [T0-10d 築底 | T0+20d 啟動] │
+                        ╰────────────────────────────╯          ╰────────────────────────────╯
+```
+
+### 四大標準轉折測試 Pattern（供回測評估與實盤 Overlay 警示共用）
+以常態層相鄰狀態切換日為邊界錨點 $T_0$，向前後展開重疊測試視窗：
+
+| Pattern 代碼 | 轉折類型 | 切換邊界 ($T_0$) | 重疊測試視窗 | 考核目標（回測）／ 實盤用途（Project） |
+|:---|:---|:---|:---|:---|
+| **`TRANS_PEAK_CRASH`** | **見頂反轉（多轉空）** | `UP → DOWN` | `[T0-10d, T0+20d]` | 逃頂速度、見頂後回撤壓制；實盤亮「減碼／收緊止盈」警燈 |
+| **`TRANS_PEAK_CHOP`** | **漲轉盤整** | `UP → CHOP` | `[T0-10d, T0+15d]` | 鎖利防回吐、避免高檔箱體反覆洗盤繳摩擦稅 |
+| **`TRANS_BOTTOM_V`** | **見底反轉（空轉多）** | `DOWN → UP` | `[T0-10d, T0+20d]` | 下跌末段禁接飛刀、反轉後回補上車速度 |
+| **`TRANS_BREAKOUT`** | **盤整突破（震盪轉多）** | `CHOP → UP` | `[T0-10d, T0+15d]` | 整理末段真突破捕捉率與假突破過濾力 |
+
+> **嚴禁未來函數分工**：事後 ZigZag 切出的 $T_0$ 視窗**僅作回測評分考卷**；實盤與策略決策一律使用下方「純因果即時四維偵測器」（曲率、斜率、背離、SMDI、TD 高九）。
+
+---
+
 ## 🧭 趨勢生命週期四階段全景圖 (The 4-Stage Trend Lifecycle)
 
 ```
@@ -168,7 +195,7 @@ class TrendTransitionDetector:
 
 ## 🛡️ 風控系統相應防禦聯動 (Risk Engine Action Trigger)
 
-當狀態偵測器發出 `ROUNDING_TOP`（圓弧頂）警告時，對接 [`prompts/risk_module.md`](risk_module.md) 執行三級連鎖防護：
+當狀態偵測器發出 `ROUNDING_TOP`（圓弧頂 / `TRANS_PEAK_CRASH` 前置警示）時，對接 [`prompts/factors/risk_module.md`](../factors/risk_module.md) 執行三級連鎖防護：
 
 1. **加倉凍結 (Freeze Pyramiding)**：立即阻斷任何順勢追買、加碼信號，防止在高檔站衛兵。
 2. **被動減碼 50% (Scale Out Half)**：無條件將現有倉位市價減半，鎖定主升段暴利落袋為安。
